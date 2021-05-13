@@ -6,10 +6,12 @@
   "license": "GPL-2.0+",
   "homepage": "https://github.com/Cyberitas/drupal-io-utils",
   "minimum-stability": "dev",
+  "prefer-stable": true,
   "support": {
     "issues": "https://github.com/Cyberitas/drupal-io-utils/issues",
     "source": "https://github.com/Cyberitas/drupal-io-utils"
   },
   "require": {
+    "drupal/paragraphs": "^1"
   }
 }

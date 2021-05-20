@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\io_util\Commands;
+namespace Drupal\io_utils\Commands;
 
 use Drupal;
 use Drush\Commands\DrushCommands;
@@ -9,7 +9,7 @@ use Drush\Commands\DrushCommands;
 /**
  * Drush commands for post import and export
  *
- * @package Drupal\io_util\Commands
+ * @package Drupal\io_utils\Commands
  */
 
 class IoCommands extends DrushCommands {
@@ -22,14 +22,14 @@ class IoCommands extends DrushCommands {
    * @param $saveFile
    *   Filename to export ID to
    *
-   * @command io_util:exportOne
+   * @command io_utils:exportOne
    * @aliases ioutil-exportOne
    *
-   * @usage io_util:exportOne 17 drupal_post_17.json
+   * @usage io_utils:exportOne 17 drupal_post_17.json
    *   Creates a file called "drupal_post_17.json" or rewrites it, and puts in a json representation of a Drupal post with ID of 17
    */
   public function exportOne($postId, $saveFile) {
-    $exportService = Drupal::service('io_util.node_exporter');
+    $exportService = Drupal::service('io_utils.node_exporter');
     $exportService->generateSaveFile($postId, $saveFile);
   }
 
@@ -40,17 +40,17 @@ class IoCommands extends DrushCommands {
    * @param $saveFile
    *   Filename to export ID to
    *
-   * @command io_util:importOne
+   * @command io_utils:importOne
    * @aliases ioutil-importOne
    * @option wptf
    *   Whether or not to transform imported WordPress content into compatible Drupal content
    *
-   * @usage io_util:importOne drupal_post_17.json
+   * @usage io_utils:importOne drupal_post_17.json
    *   Reads a file called "drupal_post_17.json", and puts saved information into a new Drupal post
    */
   public function importOne($saveFile, $options = ['wptf' => FALSE]) {
     if(!$options['wptf']) {
-      $importService = Drupal::service('io_util.node_importer');
+      $importService = Drupal::service('io_utils.node_importer');
       $importService->importSaveFile($saveFile);
     }
     else {
@@ -65,10 +65,10 @@ class IoCommands extends DrushCommands {
    * @param $saveDirectory
    *   Directory within which to place saved files
    *
-   * @command io_util:exportAll
+   * @command io_utils:exportAll
    * @aliases ioutil-exportAll
    *
-   * @usage io_util:exportAll content_type /srv/export/mass_export
+   * @usage io_utils:exportAll content_type /srv/export/mass_export
    *   Populates /srv/export/mass_export with exported files of available Drupal posts
    */
   public function exportAll($contentType, $saveDirectory) {
@@ -82,7 +82,7 @@ class IoCommands extends DrushCommands {
       $saveDirectory = $saveDirectory.'/';
     }
     $postIds = array_keys(Drupal::entityTypeManager()->getStorage('node')->loadByProperties(['type' => $contentType]));
-    $exportService = Drupal::service('io_util.node_exporter');
+    $exportService = Drupal::service('io_utils.node_exporter');
     foreach($postIds as $postId) {
       $saveFile = $saveDirectory."drupal-".$postId.".json";
       $warnings = $exportService->generateSaveFile($postId, $saveFile);
@@ -110,10 +110,10 @@ class IoCommands extends DrushCommands {
    * @param $saveDirectory
    *   Directory within which to find saved files
    *
-   * @command io_util:importAll
+   * @command io_utils:importAll
    * @aliases ioutil-importAll
    *
-   * @usage io_util:importAll /srv/export/mass_export
+   * @usage io_utils:importAll /srv/export/mass_export
    *   Reads /srv/export/mass_export for exported files to make new Drupal posts
    */
   public function importAll($saveDirectory) {
@@ -128,7 +128,7 @@ class IoCommands extends DrushCommands {
     $search = $saveDirectory.$glob;
 
     $saveFiles = glob($search);
-    $importService = Drupal::service('io_util.node_importer');
+    $importService = Drupal::service('io_utils.node_importer');
     $redirectMap = '';
     foreach($saveFiles as $saveFile) {
       echo "\nImporting ".$saveFile."... ";

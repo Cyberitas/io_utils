@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\io_util\Services\ContentProcessors;
+namespace Drupal\io_utils\Services\ContentProcessors;
 
 use Serializable;
 

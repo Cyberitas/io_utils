@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 //Unlike most encoders, 'author' is not a type. Thus, this is different.
 
 use Drupal;
 use Drupal\Core\Field\FieldItemList;
-use Drupal\io_util\Services\TaxonomyExport;
-use Drupal\io_util\Services\DrupalExportUtils;
+use Drupal\io_utils\Services\TaxonomyExport;
+use Drupal\io_utils\Services\DrupalExportUtils;
 
 class Entity_reference__taxonomy_termEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

@@ -1,13 +1,13 @@
 <?php
 
 
-namespace Drupal\io_util\Services;
+namespace Drupal\io_utils\Services;
 
 
 use Drupal;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\io_util\Services\Decoders\FieldDecoderInterface;
-use Drupal\io_util\Services\Decoders\GenericDecoder;
+use Drupal\io_utils\Services\Decoders\FieldDecoderInterface;
+use Drupal\io_utils\Services\Decoders\GenericDecoder;
 use Drupal\node\Entity\Node;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Entity\EntityBase;
@@ -27,7 +27,7 @@ class DrupalNodeImporter
     }
     $mediaItem['target_id'] = 0;
 
-    $decoder = new Drupal\io_util\Services\Decoders\ImageDecoder();
+    $decoder = new Drupal\io_utils\Services\Decoders\ImageDecoder();
     $decoder->setImportFolder( $importFolder );
     $decoder->setAllowDuplicateImages(true);
     $retVal = $decoder->decodeItem($mediaItem);
@@ -108,8 +108,8 @@ class DrupalNodeImporter
           $typeMismatch = true;
         }
 
-        if($typeMismatch && (class_exists('Drupal\\io_util\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder'))){
-          $decoderClass = 'Drupal\\io_util\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder';
+        if($typeMismatch && (class_exists('Drupal\\io_utils\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder'))){
+          $decoderClass = 'Drupal\\io_utils\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder';
           if (class_exists($decoderClass)) {
             /** @var FieldDecoderInterface $decoder */
             $decoder = new $decoderClass;
@@ -120,7 +120,7 @@ class DrupalNodeImporter
           }
         }
         else {
-          $decoderClass = 'Drupal\\io_util\\Services\\Decoders\\' . ucfirst($realType) . 'Decoder';
+          $decoderClass = 'Drupal\\io_utils\\Services\\Decoders\\' . ucfirst($realType) . 'Decoder';
           if (class_exists($decoderClass)) {
             /** @var FieldDecoderInterface $decoder */
             $decoder = new $decoderClass;

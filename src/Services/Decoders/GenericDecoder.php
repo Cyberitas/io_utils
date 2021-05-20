@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Drupal\io_util\Services\Decoders;
+namespace Drupal\io_utils\Services\Decoders;
 
 
 class GenericDecoder extends AbstractFieldDecoder implements FieldDecoderInterface

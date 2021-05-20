@@ -1,10 +1,10 @@
 <?php
 
 
-namespace Drupal\io_util\Services\Decoders;
+namespace Drupal\io_utils\Services\Decoders;
 
 use Drupal;
-use Drupal\io_util\Services\TaxonomyAncestryMatchup;
+use Drupal\io_utils\Services\TaxonomyAncestryMatchup;
 
 class Entity_reference_taxonomy_termDecoder extends AbstractFieldDecoder implements FieldDecoderInterface
 {

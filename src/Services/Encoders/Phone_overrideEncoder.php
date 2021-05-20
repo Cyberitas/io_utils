@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 class Phone_overrideEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

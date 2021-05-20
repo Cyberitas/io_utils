@@ -1,5 +1,5 @@
 <?php
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 class Custom_inline_cssEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

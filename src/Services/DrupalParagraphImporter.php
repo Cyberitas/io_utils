@@ -1,9 +1,9 @@
 <?php
-namespace Drupal\io_util\Services;
+namespace Drupal\io_utils\Services;
 
 use Drupal;
-use Drupal\io_util\Services\Decoders\FieldDecoderInterface;
-use Drupal\io_util\Services\Decoders\GenericDecoder;
+use Drupal\io_utils\Services\Decoders\FieldDecoderInterface;
+use Drupal\io_utils\Services\Decoders\GenericDecoder;
 
 class DrupalParagraphImporter
 {
@@ -21,7 +21,7 @@ class DrupalParagraphImporter
     }
 
     /** @var DrupalNodeImporter $nodeImporter */
-    $nodeImporter = Drupal::service('io_util.node_importer');
+    $nodeImporter = Drupal::service('io_utils.node_importer');
 
     // $importFolder = dirname($filename);
     $serialized = file_get_contents($filename);
@@ -57,8 +57,8 @@ class DrupalParagraphImporter
           $typeMismatch = true;
         }
 
-        if($typeMismatch && (class_exists('Drupal\\io_util\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder'))){
-          $decoderClass = 'Drupal\\io_util\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder';
+        if($typeMismatch && (class_exists('Drupal\\io_utils\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder'))){
+          $decoderClass = 'Drupal\\io_utils\\Services\\Decoders\\' . ucfirst($savedType) . 'Decoder';
           if (class_exists($decoderClass)) {
             /** @var FieldDecoderInterface $decoder */
             $decoder = new $decoderClass;
@@ -69,7 +69,7 @@ class DrupalParagraphImporter
           }
         }
         else {
-          $decoderClass = 'Drupal\\io_util\\Services\\Decoders\\' . ucfirst($realType) . 'Decoder';
+          $decoderClass = 'Drupal\\io_utils\\Services\\Decoders\\' . ucfirst($realType) . 'Decoder';
           if (class_exists($decoderClass)) {
             /** @var FieldDecoderInterface $decoder */
             $decoder = new $decoderClass;

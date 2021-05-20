@@ -1,5 +1,5 @@
 <?php
-namespace Drupal\io_util\Services\Decoders;
+namespace Drupal\io_utils\Services\Decoders;
 
 class Video_embed_fieldDecoder extends GenericDecoder {
 

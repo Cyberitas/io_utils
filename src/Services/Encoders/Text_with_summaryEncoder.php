@@ -1,5 +1,5 @@
 <?php
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 class Text_with_summaryEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

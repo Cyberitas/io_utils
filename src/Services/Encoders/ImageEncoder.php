@@ -1,12 +1,12 @@
 <?php
 
 
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 
 use Drupal\Core\Field\FieldItemList;
-use Drupal\io_util\Services\DrupalExportUtils;
-use Drupal\io_util\Services\DrupalFileExporter;
+use Drupal\io_utils\Services\DrupalExportUtils;
+use Drupal\io_utils\Services\DrupalFileExporter;
 
 class ImageEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 
 use Drupal\Core\Field\FieldItemInterface;

@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 use Drupal;
-use Drupal\io_util\Services\DrupalParagraphExporter;
+use Drupal\io_utils\Services\DrupalParagraphExporter;
 use Drupal\entity_reference_revisions\Plugin\Field\FieldType\EntityReferenceRevisionsItem;
 
 class Entity_reference__mediaEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
@@ -23,7 +23,7 @@ class Entity_reference__mediaEncoder extends AbstractFieldEncoder implements Fie
     $referencedEntityType = $referencedEntity->getEntityTypeId();
     if( $referencedEntityType !== 'media' ) {
       $err = "Deep referenced item type mismatch.  Expected media, received $referencedEntityType\n";
-      Drupal\io_util\Services\DrupalExportUtils::$warnings[] = $err;
+      Drupal\io_utils\Services\DrupalExportUtils::$warnings[] = $err;
       echo $err;
     }
 
@@ -34,7 +34,7 @@ class Entity_reference__mediaEncoder extends AbstractFieldEncoder implements Fie
       ],
     ];
 
-    $mediaService = new Drupal\io_util\Services\DrupalMediaExporter();
+    $mediaService = new Drupal\io_utils\Services\DrupalMediaExporter();
     $saveFile = $mediaService->generateSaveFile($referencedEntity);
     if( $saveFile != null ) {
       $encodedValue['referenced_entity']['export_file'] = $saveFile;

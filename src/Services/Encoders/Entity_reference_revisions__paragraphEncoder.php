@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 use Drupal;
-use Drupal\io_util\Services\DrupalParagraphExporter;
+use Drupal\io_utils\Services\DrupalParagraphExporter;
 use Drupal\entity_reference_revisions\Plugin\Field\FieldType\EntityReferenceRevisionsItem;
 
 class Entity_reference_revisions__paragraphEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
@@ -23,7 +23,7 @@ class Entity_reference_revisions__paragraphEncoder extends AbstractFieldEncoder 
     $referencedEntityType = $referencedEntity->getEntityTypeId();
     if( $referencedEntityType !== 'paragraph' ) {
       $err = "Deep referenced item type mismatch.  Expected paragraph, received $referencedEntityType\n";
-      Drupal\io_util\Services\DrupalExportUtils::$warnings[] = $err;
+      Drupal\io_utils\Services\DrupalExportUtils::$warnings[] = $err;
       echo $err;
     }
 
@@ -35,7 +35,7 @@ class Entity_reference_revisions__paragraphEncoder extends AbstractFieldEncoder 
       ],
     ];
 
-    $paragraphService = new Drupal\io_util\Services\DrupalParagraphExporter();
+    $paragraphService = new Drupal\io_utils\Services\DrupalParagraphExporter();
     $saveFile = $paragraphService->generateSaveFile($referencedEntity);
     if( $saveFile != null ) {
       $encodedValue['referenced_entity']['export_file'] = $saveFile;

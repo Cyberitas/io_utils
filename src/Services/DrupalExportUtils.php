@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\io_util\Services;
+namespace Drupal\io_utils\Services;
 use Drupal;
-use Drupal\io_util\Services\Encoders\FieldEncoderInterface;
-use Drupal\io_util\Services\Encoders\GenericEncoder;
+use Drupal\io_utils\Services\Encoders\FieldEncoderInterface;
+use Drupal\io_utils\Services\Encoders\GenericEncoder;
 
 class DrupalExportUtils
 {
@@ -22,7 +22,7 @@ class DrupalExportUtils
     // Ideally this section should be moved to a shared service method so cyclic/recursive types like paragraphs
     // and entity references are better handled.
     $type = $definition->getType();
-    $encoderClass = 'Drupal\\io_util\\Services\\Encoders\\'.ucfirst($type).'Encoder';
+    $encoderClass = 'Drupal\\io_utils\\Services\\Encoders\\'.ucfirst($type).'Encoder';
     if(class_exists($encoderClass)) {
       /** @var FieldEncoderInterface $encoder */
       $encoder = new $encoderClass;
@@ -36,7 +36,7 @@ class DrupalExportUtils
 
     if($type == 'entity_reference' || $type == 'entity_reference_revisions' ) {
       $targetType = $entity->get($key)->getSettings()['target_type'];
-      $deepEncoderClass = 'Drupal\\io_util\\Services\\Encoders\\'.ucfirst($type).'__'.$targetType.'Encoder';
+      $deepEncoderClass = 'Drupal\\io_utils\\Services\\Encoders\\'.ucfirst($type).'__'.$targetType.'Encoder';
       $deepEncoder = null;
       if(class_exists($deepEncoderClass)) {
         /** @var FieldEncoderInterface $encoder */
@@ -47,7 +47,7 @@ class DrupalExportUtils
       } else {
         if( !$values->isEmpty() ) {
           $err = "Can not deep-copy reference to type $targetType, a shallow-reference will be exported instead. ";
-          Drupal\io_util\Services\DrupalExportUtils::$warnings[] = $err;
+          Drupal\io_utils\Services\DrupalExportUtils::$warnings[] = $err;
           echo "\n WARNING: $err Make sure target exists before importing.";
         }
 

@@ -1,10 +1,10 @@
 <?php
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 use Drupal;
 use Drupal\Core\Field\FieldItemList;
-use Drupal\io_util\Services\TaxonomyExport;
-use Drupal\io_util\Services\DrupalExportUtils;
+use Drupal\io_utils\Services\TaxonomyExport;
+use Drupal\io_utils\Services\DrupalExportUtils;
 
 class Entity_reference__block_contentEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

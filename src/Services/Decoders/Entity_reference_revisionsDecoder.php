@@ -1,8 +1,8 @@
 <?php
-namespace Drupal\io_util\Services\Decoders;
+namespace Drupal\io_utils\Services\Decoders;
 use Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem;
-use Drupal\io_util\Services\DrupalNodeExporter;
-use Drupal\io_util\Services\DrupalParagraphImporter;
+use Drupal\io_utils\Services\DrupalNodeExporter;
+use Drupal\io_utils\Services\DrupalParagraphImporter;
 use Drupal\facets\Exception\Exception;
 
 class Entity_reference_revisionsDecoder extends AbstractFieldDecoder implements FieldDecoderInterface

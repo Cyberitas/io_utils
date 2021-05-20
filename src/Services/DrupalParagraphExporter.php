@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Drupal\io_util\Services;
+namespace Drupal\io_utils\Services;
 use Drupal;
 
 

@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Drupal\io_util\Services;
+namespace Drupal\io_utils\Services;
 
 use Drupal;
 use Drupal\Core\TypedData\DataDefinition;
-use Drupal\io_util\Services\Decoders\FieldDecoderInterface;
-use Drupal\io_util\Services\Decoders\GenericDecoder;
-use Drupal\io_util\Services\Encoders\FieldEncoderInterface;
-use Drupal\io_util\Services\Encoders\GenericEncoder;
+use Drupal\io_utils\Services\Decoders\FieldDecoderInterface;
+use Drupal\io_utils\Services\Decoders\GenericDecoder;
+use Drupal\io_utils\Services\Encoders\FieldEncoderInterface;
+use Drupal\io_utils\Services\Encoders\GenericEncoder;
 use Drupal\node\Entity\Node;
 
 class WordPressPostImporter

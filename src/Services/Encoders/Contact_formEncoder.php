@@ -1,5 +1,5 @@
 <?php
-namespace Drupal\io_util\Services\Encoders;
+namespace Drupal\io_utils\Services\Encoders;
 
 class Contact_formEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
 {

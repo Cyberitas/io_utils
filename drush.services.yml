@@ -1,5 +1,5 @@
 services:
-  io-util.commands:
+  io_utils.commands:
     class: \Drupal\io_utils\Commands\IoCommands
     tags:
       - { name: drush.command }

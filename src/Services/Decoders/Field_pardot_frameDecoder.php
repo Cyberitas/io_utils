@@ -1,5 +1,5 @@
 <?php
-namespace Drupal\io_util\Services\Decoders;
+namespace Drupal\io_utils\Services\Decoders;
 
 class Field_pardot_frameDecoder extends GenericDecoder {
 

@@ -1,8 +1,8 @@
 <?php
 
 
-namespace Drupal\io_util\Services\Decoders;
-use Drupal\io_util\Services\DrupalMediaImporter;
+namespace Drupal\io_utils\Services\Decoders;
+use Drupal\io_utils\Services\DrupalMediaImporter;
 
 class Entity_referenceDecoder extends AbstractFieldDecoder implements FieldDecoderInterface
 {

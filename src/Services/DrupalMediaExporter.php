@@ -1,7 +1,7 @@
 <?php
-namespace Drupal\io_util\Services;
+namespace Drupal\io_utils\Services;
 use Drupal;
-use Drupal\io_util\Services\Encoders\AuthorEncoder;
+use Drupal\io_utils\Services\Encoders\AuthorEncoder;
 
 
 class DrupalMediaExporter

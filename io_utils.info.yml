@@ -1,9 +1,9 @@
-name: Cyberitas IO Util
+name: IO Utilities
 type: module
 description: "Provides Drush commands to allow users to deep import/export nodes into and out of files"
-package: Cyberitas
+package: IO Utilities
 core_version_requirement: ^8.8 || ^9
 author: Cyberitas Technologies, LLC.
-version: '2.1.0'
+version: '3.0.0'
 dependencies:
     - node

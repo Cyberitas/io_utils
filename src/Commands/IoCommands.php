@@ -24,14 +24,13 @@ class IoCommands extends DrushCommands {
    * @param $bPublishedOnly
    *   Boolean flag indicates if only published nodes can be exported or not
    *
-   * @command cyberitas_io_util:exportOne
-   * @aliases cyberitas-ioutil-exportOne
+   * @command io-utils:export-one
    *
-   * @usage cyberitas_io_util:exportOne 17 drupal_post_17.json 0
+   * @usage io-utils:export-one 17 drupal_post_17.json 0
    *   Creates a file called "drupal_post_17.json" or rewrites it, and puts in a json representation of a Drupal post with ID of 17
    */
   public function exportOne($postId, $saveFile, $bPublishedOnly=true) {
-    $exportService = Drupal::service('cyberitas_io_util.node_exporter');
+    $exportService = Drupal::service('io_utils.node_exporter');
     $exportService->generateSaveFile($postId, $saveFile, $bPublishedOnly);
   }
 
@@ -44,14 +43,13 @@ class IoCommands extends DrushCommands {
    * @param $saveFile
    *   Filename to export ID to
    *
-   * @command cyberitas_io_util:exportBlockContent
-   * @aliases cyberitas-ioutil-exportBlockContent
+   * @command io-utils:export-block-content
    *
-   * @usage cyberitas_io_util:exportBlockContent 17 drupal_block_content_17.json
+   * @usage io-utils:export-block-content 17 drupal_block_content_17.json
    *   Creates a file called "drupal_block_content_17.json" or rewrites it, and puts in a json representation of a Drupal block with ID of 17
    */
   public function exportBlockContent($blockContentId, $saveFile) {
-    $exportService = Drupal::service('cyberitas_io_util.block_content_exporter');
+    $exportService = Drupal::service('io_utils.block_content_exporter');
     $exportService->generateSaveFile($blockContentId, $saveFile);
   }
 
@@ -62,12 +60,11 @@ class IoCommands extends DrushCommands {
    * @param $saveFile
    *   Filename to import block content from
    *
-   * @command cyberitas_io_util:importOneBlockContent
-   * @aliases cyberitas-ioutil-importOneBlockContent
+   * @command io-utils:import-one-block-content
    * @option wptf
    *   Whether or not to transform imported WordPress content into compatible Drupal content
    *
-   * @usage cyberitas_io_util:importOneBlockContent /srv/export/block-17.json
+   * @usage io-utils:import-one-block-content /srv/export/block-17.json
    * Reads a file called "block-17.json", and puts saved information into a new Drupal block content
    */
   public function importOneBlockContent($saveFile, $options = ['wptf' => FALSE]) {
@@ -78,7 +75,7 @@ class IoCommands extends DrushCommands {
     $saveDirectory = dirname($saveFile);
 
     if(!$options['wptf']) {
-      $importService = Drupal::service('cyberitas_io_util.block_content_importer');
+      $importService = Drupal::service('io_utils.block_content_importer');
       echo "\nImporting block content " . $saveFile . "... ";
       $importService->importBlockContentSaveFile($saveDirectory, $saveFile);
     }
@@ -94,10 +91,9 @@ class IoCommands extends DrushCommands {
    * @param $saveDirectory
    *   Directory within which to find saved files
    *
-   * @command cyberitas_io_util:importAllBlockContent
-   * @aliases cyberitas-ioutil-importAllBlockContent
+   * @command io-utils:import-all-block-content
    *
-   * @usage cyberitas_io_util:importAllBlockContent /srv/export/mass_export
+   * @usage io-utils:import-all-block-content /srv/export/mass_export
    *   Reads /srv/export/mass_export for exported files to make new Drupal block content
    */
   public function importAllBlockContent($saveDirectory) {
@@ -112,7 +108,7 @@ class IoCommands extends DrushCommands {
     $search = $saveDirectory.$glob;
     $saveFiles = glob($search);
 
-    $importService = Drupal::service('cyberitas_io_util.block_content_importer');
+    $importService = Drupal::service('io_utils.block_content_importer');
     foreach($saveFiles as $saveFile) {
       echo "\nImporting block content " . $saveFile . "... ";
       $importService->importBlockContentSaveFile($saveDirectory, $saveFile);
@@ -127,17 +123,16 @@ class IoCommands extends DrushCommands {
    * @param $saveFile
    *   Filename to export ID to
    *
-   * @command cyberitas_io_util:importOne
-   * @aliases cyberitas-ioutil-importOne
+   * @command io-utils:import-one
    * @option wptf
    *   Whether or not to transform imported WordPress content into compatible Drupal content
    *
-   * @usage cyberitas_io_util:importOne drupal_post_17.json
+   * @usage io-utils:import-one drupal_post_17.json
    *   Reads a file called "drupal_post_17.json", and puts saved information into a new Drupal post
    */
   public function importOne($saveFile, $options = ['wptf' => FALSE]) {
     if(!$options['wptf']) {
-      $importService = Drupal::service('cyberitas_io_util.node_importer');
+      $importService = Drupal::service('io_utils.node_importer');
       $importService->importSaveFile($saveFile);
     }
     else {
@@ -152,10 +147,9 @@ class IoCommands extends DrushCommands {
    * @param $saveDirectory
    *   Directory within which to place saved files
    *
-   * @command cyberitas_io_util:exportAll
-   * @aliases cyberitas-ioutil-exportAll
+   * @command io-utils:export-all
    *
-   * @usage cyberitas_io_util:exportAll content_type /srv/export/mass_export
+   * @usage io-utils:export-all content_type /srv/export/mass_export
    *   Populates /srv/export/mass_export with exported files of available Drupal posts
    */
   public function exportAll($contentType, $saveDirectory) {
@@ -169,7 +163,7 @@ class IoCommands extends DrushCommands {
       $saveDirectory = $saveDirectory.'/';
     }
     $postIds = array_keys(Drupal::entityTypeManager()->getStorage('node')->loadByProperties(['type' => $contentType]));
-    $exportService = Drupal::service('cyberitas_io_util.node_exporter');
+    $exportService = Drupal::service('io_utils.node_exporter');
     foreach($postIds as $postId) {
       $saveFile = $saveDirectory."drupal-".$postId.".json";
       $warnings = $exportService->generateSaveFile($postId, $saveFile);
@@ -197,10 +191,9 @@ class IoCommands extends DrushCommands {
    * @param $saveDirectory
    *   Directory within which to find saved files
    *
-   * @command cyberitas_io_util:importAll
-   * @aliases cyberitas-ioutil-importAll
+   * @command io-utils:import-all
    *
-   * @usage cyberitas_io_util:importAll /srv/export/mass_export
+   * @usage io-utils:import-all /srv/export/mass_export
    *   Reads /srv/export/mass_export for exported files to make new Drupal posts
    */
   public function importAll($saveDirectory) {
@@ -215,7 +208,7 @@ class IoCommands extends DrushCommands {
     $search = $saveDirectory.$glob;
 
     $saveFiles = glob($search);
-    $importService = Drupal::service('cyberitas_io_util.node_importer');
+    $importService = Drupal::service('io_utils.node_importer');
     $redirectMap = '';
     foreach($saveFiles as $saveFile) {
       echo "\nImporting ".$saveFile."... ";
@@ -230,6 +223,4 @@ class IoCommands extends DrushCommands {
     echo "\nDone. Check for errors in the output above.\n";
 
   }
-
-
 }

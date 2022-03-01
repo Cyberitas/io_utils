@@ -21,7 +21,7 @@ class DrupalMediaImporter
     }
 
     /** @var DrupalNodeImporter $nodeImporter */
-    $nodeImporter = Drupal::service('cyberitas_io_util.node_importer');
+    $nodeImporter = Drupal::service('io_utils.node_importer');
 
     $serialized = file_get_contents($filename);
     $saveFormat = new ContentProcessors\ContentItem();

@@ -24,7 +24,7 @@ class DrupalBlockContentImporter
     }
 
     /** @var DrupalNodeImporter $nodeImporter */
-    $nodeImporter = Drupal::service('cyberitas_io_util.node_importer');
+    $nodeImporter = Drupal::service('io_utils.node_importer');
 
     // $importFolder = dirname($filename);
     $serialized = file_get_contents($filename);

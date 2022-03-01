@@ -13,10 +13,11 @@ class DrupalNodeExporter
   /**
    * @param $nodeId
    * @param $filename
+   * @param $bPublishedOnly
    * @return array
    * @throws Drupal\Core\Entity\EntityMalformedException
    */
-  public function generateSaveFile($nodeId, $filename): array
+  public function generateSaveFile($nodeId, $filename, bool $bPublishedOnly=true): array
   {
     DrupalExportUtils::$exportFolder = dirname( $filename );
 
@@ -25,7 +26,7 @@ class DrupalNodeExporter
     $node = Node::load($nodeId);
     if($node) {
 
-      if( !$node->isPublished() ) {
+      if( $bPublishedOnly && !$node->isPublished() ) {
         echo 'NOT PUBLISHED - SKIPPING ';
         echo $node->toUrl()->toString();
         return [];
@@ -60,6 +61,7 @@ class DrupalNodeExporter
           $attachedData[$key] = DrupalExportUtils::encodeField($definition, $node, $key, $values);
         }
       }
+      $attachedData['uuid'] = DrupalExportUtils::encodeField($definitions['uuid'], $node, 'uuid', $node->get('uuid'));
       if( $node->get('path') && !$node->get('path')->isEmpty() ) {
         $attachedData['path'] = DrupalExportUtils::encodeField($definitions['path'], $node, 'path', $node->get('path'));
       }

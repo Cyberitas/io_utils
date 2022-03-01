@@ -21,11 +21,25 @@ class DrupalMediaImporter
     }
 
     /** @var DrupalNodeImporter $nodeImporter */
-    $nodeImporter = Drupal::service('io_utils.node_importer');
+    $nodeImporter = Drupal::service('cyberitas_io_util.node_importer');
 
     $serialized = file_get_contents($filename);
     $saveFormat = new ContentProcessors\ContentItem();
     $saveFormat->unserialize($serialized);
+
+
+    // Check if media already exists. Display message and return if so.
+    if (isset($saveFormat->getAttachedData()['uuid']['items'][0]['value']) &&
+      !empty($saveFormat->getAttachedData()['uuid']['items'][0]['value']) ) {
+      $uuid = $saveFormat->getAttachedData()['uuid']['items'][0]['value'];
+
+      $count = \Drupal::entityTypeManager()->getStorage('media')->loadByProperties(['uuid' => $uuid]);
+      if (count($count) > 0) {
+        echo "Warning, Media UUID $uuid already exists, skipping media import.\n";
+        return null;
+      }
+    }
+
 
     // Import dependent media
     if( $saveFormat->getInlineMedia() && is_array( $saveFormat->getInlineMedia() ) && count( $saveFormat->getInlineMedia() ) > 0 ) {
@@ -95,6 +109,21 @@ class DrupalMediaImporter
         $media->set($key, $decoder->decodeItems($encodedValue));
       }
     }
+
+
+    // We preserve media's UUID for embedded drupal-media WYSIWYG use!
+    if (isset($saveFormat->getAttachedData()['uuid']['items'][0]['value']) &&
+      !empty($saveFormat->getAttachedData()['uuid']['items'][0]['value']) ) {
+      $uuid = $saveFormat->getAttachedData()['uuid']['items'][0]['value'];
+
+      $count = \Drupal::entityTypeManager()->getStorage('media')->loadByProperties(['uuid' => $uuid]);
+      if (count($count) > 0) {
+        echo "Warning, Media UUID $uuid already exists, not setting uuid.\n";
+      } else {
+        $media->set('uuid', $uuid);
+      }
+    }
+
 
     //$media->setPublished();
     $media->isNew();

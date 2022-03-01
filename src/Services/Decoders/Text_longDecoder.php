@@ -7,19 +7,6 @@ namespace Drupal\io_utils\Services\Decoders;
 use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\TypedData\DataDefinition;
 
-class Text_longDecoder extends AbstractFieldDecoder implements FieldDecoderInterface
+class Text_longDecoder extends AbstractTextWithEmbedDecoder
 {
-
-  public function decodeItems($encodedValue) {
-    return $encodedValue['items'];
-  }
-
-    /**
-     * @inheritDoc
-     */
-    public function decodeItem($value)
-    {
-      //Not used; full array returned by decodeItems()
-      return null;
-    }
 }

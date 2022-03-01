@@ -5,3 +5,7 @@ services:
     class: Drupal\io_utils\Services\WordPressPostImporter
   io_utils.node_exporter:
     class: Drupal\io_utils\Services\DrupalNodeExporter
+  io_utils.block_content_exporter:
+    class: Drupal\io_utils\Services\DrupalBlockContentExporter
+  io_utils.block_content_importer:
+    class: Drupal\io_utils\Services\DrupalBlockContentImporter

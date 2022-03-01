@@ -29,7 +29,7 @@ class DrupalNodeImporter
 
     $decoder = new Drupal\io_utils\Services\Decoders\ImageDecoder();
     $decoder->setImportFolder( $importFolder );
-    $decoder->setAllowDuplicateImages(true);
+    $decoder->setAllowDuplicateImages(false);
     $retVal = $decoder->decodeItem($mediaItem);
     $newId = null;
     if( isset($retVal['target_id']) ) $newId = $retVal['target_id'];
@@ -83,10 +83,12 @@ class DrupalNodeImporter
       $definition = Drupal::service('entity_field.manager')->getFieldDefinitions('node', $node->bundle())[$key];
       if ($definition->getTargetBundle()) {
         $realType = $definition->getType();
-
         $encodedValue = null;
         $savedType = $realType;
         switch ($key) {
+          case 'path':
+            //skip
+            break;
           case 'body':
           case 'field_thewire_body':
             if (isset($saveFormat->getAttachedData()[$key])) {
@@ -136,6 +138,21 @@ class DrupalNodeImporter
       }
     }
 
+    // Path
+    if (isset($saveFormat->getAttachedData()['path']['items'][0]['alias']) &&
+      isset($saveFormat->getAttachedData()['path']['items'][0]['langcode']) ) {
+      $alias = $saveFormat->getAttachedData()['path']['items'][0]['alias'];
+      $langcode = $saveFormat->getAttachedData()['path']['items'][0]['langcode'];
+      if( \Drupal::service('path_alias.repository')->lookUpByAlias($alias, $langcode) !== null ) {
+        echo "Warning, URL alias $alias already exists, not setting path.\n";
+      } else {
+        $encodedValue = $saveFormat->getAttachedData()['path'];
+        $decoder = new Drupal\io_utils\Services\Decoders\PathDecoder();
+        $decoder->setImportFolder($importFolder);
+        $node->set('path', $decoder->decodeItems($encodedValue));
+      }
+    }
+
     // Tags
     if($saveFormat->getAdvancedTagArray() != null) {
       foreach ($saveFormat->getAdvancedTagArray() as $advancedTag) {
@@ -151,8 +168,8 @@ class DrupalNodeImporter
     }
 
     $node->save();
-    echo "\nNew node created at NID " . $node->id();
-    return [ 'new' => $node->url(), 'old' => $saveFormat->getUrl() ];
+    echo "\nNew node created at NID " . $node->id() . " with URL " . $node->toUrl()->toString();
+    return [ 'new' => $node->toUrl()->toString(), 'old' => $saveFormat->getUrl() ];
   }
 
   /**

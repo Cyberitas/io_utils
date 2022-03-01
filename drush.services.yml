@@ -1,5 +1,5 @@
 services:
-  io_utils.commands:
+  cyberitas-io-util.commands:
     class: \Drupal\io_utils\Commands\IoCommands
     tags:
       - { name: drush.command }

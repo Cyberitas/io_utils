@@ -1,17 +1,8 @@
 <?php
 namespace Drupal\io_utils\Services\Encoders;
 
-class Text_with_summaryEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
+use Drupal\Core\Field\FieldItemList;
+
+class Text_with_summaryEncoder extends AbstractTextWithEmbedEncoder
 {
-    /**
-     * @inheritDoc
-     */
-    public function encodeItem($value)
-    {
-      return [
-        'value' => $value->value,
-        'summary' => $value->summary,
-        'format' => $value->format
-      ];
-    }
 }

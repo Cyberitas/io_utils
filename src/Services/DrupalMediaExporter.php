@@ -33,6 +33,7 @@ class DrupalMediaExporter
 
       $attachedData = array();
       $attachedData['name'] = DrupalExportUtils::encodeField($definitions['name'], $mediaItem, 'name', $mediaItem->get('name'));
+      $attachedData['uuid'] = DrupalExportUtils::encodeField($definitions['uuid'], $mediaItem, 'uuid', $mediaItem->get('uuid'));
       $attachedData['path'] = DrupalExportUtils::encodeField($definitions['path'], $mediaItem, 'path', $mediaItem->get('path'));
       foreach($mediaItem->getFields() as $key=>$values) {
         $definition = $definitions[$key];

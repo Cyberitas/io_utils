@@ -2,21 +2,24 @@
 namespace Drupal\io_utils\Services;
 
 use Drupal;
+use Drupal\block_content\Entity\BlockContent;
 use Drupal\io_utils\Services\Decoders\FieldDecoderInterface;
 use Drupal\io_utils\Services\Decoders\GenericDecoder;
 
-class DrupalParagraphImporter
+class DrupalBlockContentImporter
 {
-
   /**
+   * Import block content definitions from the file.
+   *
+   * @param $baseDir
    * @param $filename
-   * @return Drupal\paragraphs\Entity\Paragraph|null
+   * @return BlockContent|null
    * @throws Drupal\Core\Entity\EntityStorageException
    */
-  public function importParagraphSaveFile($baseDir, $filename)
+  public function importBlockContentSaveFile($baseDir, $filename)
   {
     if (!file_exists($filename)) {
-      echo "Paragraph definition not found at " . $filename . ", import failed.\n";
+      echo "ERROR: Block content definition not found at " . $filename . ", import failed.\n";
       return null;
     }
 
@@ -28,6 +31,13 @@ class DrupalParagraphImporter
     $saveFormat = new ContentProcessors\ContentItem();
     $saveFormat->unserialize($serialized);
 
+    // Load all the block content items and check if title already exists. Display message and return.
+    $blockContentItems = Drupal::entityQuery('block_content')->condition('info', $saveFormat->getTitle())->execute();
+    if($blockContentItems && sizeof($blockContentItems) > 0) {
+      echo "ERROR: Block content already exists with description [" . $saveFormat->getTitle() . "], import failed.\n";
+      return null;
+    }
+
     // Import dependent media
     if( $saveFormat->getInlineMedia() && is_array( $saveFormat->getInlineMedia() ) && count( $saveFormat->getInlineMedia() ) > 0 ) {
       foreach( $saveFormat->getInlineMedia() as $mediaItem ) {
@@ -35,14 +45,16 @@ class DrupalParagraphImporter
       }
     }
 
-    /** @var Drupal\paragraphs\Entity\Paragraph $paragraph */
-    $paragraph = Drupal\paragraphs\Entity\Paragraph::create([
+    /** @var BlockContent $blockContent */
+    $blockContent = BlockContent::create([
       'type' => $saveFormat->getPostType(),
-      //'title' => $saveFormat->getTitle(),
+      'info' => $saveFormat->getTitle(),
     ]);
 
-    foreach ($paragraph->getFields() as $key => $values) {
-      $definition = Drupal::service('entity_field.manager')->getFieldDefinitions('paragraph', $paragraph->bundle())[$key];
+    echo "\n    Importing block content item: " . $saveFormat->getTitle() . "...";
+
+    foreach ($blockContent->getFields() as $key => $values) {
+      $definition = Drupal::service('entity_field.manager')->getFieldDefinitions('block_content', $blockContent->bundle())[$key];
       if ($definition->getTargetBundle()) {
         $realType = $definition->getType();
 
@@ -81,14 +93,26 @@ class DrupalParagraphImporter
         }
         $decoder->setImportFolder( $baseDir );
 
-        $paragraph->set($key, $decoder->decodeItems($encodedValue));
+        $blockContent->set($key, $decoder->decodeItems($encodedValue));
       }
     }
 
-    $paragraph->isNew();
-    $paragraph->save();
-    // echo "    New paragraph created at ID " . $paragraph->id();
-    return $paragraph;
-  }
+    // We preserve block's UUID for embedded drupal-entity and block placement use!
+    if (isset($saveFormat->getAttachedData()['uuid']['items'][0]['value']) &&
+      !empty($saveFormat->getAttachedData()['uuid']['items'][0]['value']) ) {
+      $uuid = $saveFormat->getAttachedData()['uuid']['items'][0]['value'];
 
+      $count = \Drupal::entityTypeManager()->getStorage('block_content')->loadByProperties(['uuid' => $uuid]);
+      if (count($count) > 0) {
+        echo "Warning, Block UUID $uuid already exists, not setting uuid.\n";
+      } else {
+        $blockContent->set('uuid', $uuid);
+      }
+    }
+
+    $blockContent->isNew();
+    $blockContent->save();
+    echo " New block content created at ID " . $blockContent->id() . "\n";
+    return $blockContent;
+  }
 }

@@ -1,7 +1,7 @@
 services:
   io_utils.node_importer:
     class: Drupal\io_utils\Services\DrupalNodeImporter
-  io_utils.wpimporter:
+  io_utils.wp_importer:
     class: Drupal\io_utils\Services\WordPressPostImporter
   io_utils.node_exporter:
     class: Drupal\io_utils\Services\DrupalNodeExporter

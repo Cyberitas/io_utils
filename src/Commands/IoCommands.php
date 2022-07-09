@@ -4,6 +4,7 @@ namespace Drupal\io_utils\Commands;
 
 use Drupal;
 use Drush\Commands\DrushCommands;
+use Drush\Exceptions\UserAbortException;
 
 
 /**
@@ -13,9 +14,61 @@ use Drush\Commands\DrushCommands;
  */
 
 class IoCommands extends DrushCommands {
+
+    /**
+     * Search all active entities for a regular expression
+     * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
+     * @option field-names Optional comma-separated list of entity types to search
+     * @command io-utils:search
+     * @usage io-utils:search "/example/" [--field-names body,field_example]
+     *   Searches for the given regex expression in all active fields of all published entities
+     */
+    public function search(string $search, $options = ['field-names' => NULL]) {
+
+        $fieldNames = [];
+        if( !empty($options['field-names']) ) {
+            $fieldNames = explode(',', $options['field-names']);
+        }
+        $searchService = new Drupal\io_utils\Services\SearchAndReplace($this->output);
+        ob_start();
+        $count = $searchService->findByRegex($search, $fieldNames);
+        $results = ob_get_clean();
+
+        $this->io()->writeln($results);
+        $this->io()->success("Your search term was found in $count entities.");
+    }
+
+    /**
+     * Search and replace all active entities for a regular expression with a replacement, allowing back references
+     * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
+     * @param string $replace The replacement string, e.g. "bar-$1-baz"
+     * @option field-names Optional comma-separated list of entity types to search/replace
+     * @command io-utils:replace
+     * @usage io-utils:replace "/^foo-(.*)-baz$/" "bar-$1-baz" --field-names body,field_example
+     *   Searches for the given regex expression in all active fields of all published entities, and replaces it with the given replacement string
+     */
+    public function replace(string $search, string $replace, $options = ['field-names' => NULL]) {
+
+        if (!$this->io()->confirm(dt('Are you sure you wish to continue with a global search and replace (you should back up the DB first)?'))) {
+            throw new UserAbortException();
+        }
+
+        $fieldNames = [];
+        if( !empty($options['field-names']) ) {
+            $fieldNames = explode(',', $options['field-names']);
+        }
+        $searchService = new Drupal\io_utils\Services\SearchAndReplace($this->output);
+        ob_start();
+        $count = $searchService->replaceByRegex($search, $replace, $fieldNames);
+        $results = ob_get_clean();
+
+        $this->io()->writeln($results);
+        $this->io()->success("Your search term was replaced in $count entities.");
+    }
+
+
   /**
-   *
-   * This command exports a given Drupal post by ID to a given file.
+   * Exports an entity by ID to a JSON file.
    *
    * @param $postId
    *   ID for post to export
@@ -35,8 +88,7 @@ class IoCommands extends DrushCommands {
   }
 
   /**
-   *
-   * This command exports a given Drupal block content by ID to a given file.
+   * Exports a block content by ID to a JSON file.
    *
    * @param $blockContentId
    *   ID for block content to export
@@ -54,8 +106,7 @@ class IoCommands extends DrushCommands {
   }
 
   /**
-   *
-   * This command imports a given Drupal block content from a given file.
+   * Imports block content from a JSON file.
    *
    * @param $saveFile
    *   Filename to import block content from
@@ -85,8 +136,7 @@ class IoCommands extends DrushCommands {
   }
 
   /**
-   *
-   * This command imports all saved Drupal block content within a given file directory.
+   * Imports all saved block content within a directory.
    *
    * @param $saveDirectory
    *   Directory within which to find saved files
@@ -117,11 +167,10 @@ class IoCommands extends DrushCommands {
   }
 
   /**
-   *
-   * This command import a given Drupal post by ID to a given file.
+   * Import an entity from a JSON file.
    *
    * @param $saveFile
-   *   Filename to export ID to
+   *   Filename of JSON to import
    *
    * @command io-utils:import-one
    * @option wptf
@@ -141,8 +190,7 @@ class IoCommands extends DrushCommands {
   }
 
   /**
-   *
-   * This command exports all available Drupal posts into a given file directory.
+   * Exports all entities to JSON files in a directory.
    *
    * @param $saveDirectory
    *   Directory within which to place saved files
@@ -185,8 +233,7 @@ class IoCommands extends DrushCommands {
   }
 
   /**
-   *
-   * This command imports all saved Drupal posts within a given file directory.
+   * Imports all entities from JSON files from a directory.
    *
    * @param $saveDirectory
    *   Directory within which to find saved files

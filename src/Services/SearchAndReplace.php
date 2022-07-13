@@ -19,24 +19,23 @@ class SearchAndReplace
         $this->output = $output;
     }
 
-    public function findByRegex(string $search, array $fieldNames ): int
+    public function findByRegex(string $search, array $restrictToFieldNames ): int
     {
-        return $this->findAndReplace($search, null, $fieldNames, false);
+        return $this->findAndReplace($search, null, $restrictToFieldNames, false);
     }
 
-    public function replaceByRegex( string $search, string $replace, array $fieldNames ): int
+    public function replaceByRegex( string $search, string $replace, array $restrictToFieldNames ): int
     {
-        return $this->findAndReplace($search, $replace, $fieldNames, true);
+        return $this->findAndReplace($search, $replace, $restrictToFieldNames, true);
     }
 
 
-    private function findAndReplace( string $search, ?string $replace, array $fieldNames, bool $bDoReplace = false ): int
+    private function findAndReplace( string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false ): int
     {
         $iFoundEntity = 0;
         $aUnsupportedTypes = [];
         $nids = \Drupal::entityQuery('node')->execute();
         if ($nids) {
-
             $progressBar = new ProgressBar($this->output, count($nids));
             $progressBar->start();
             echo "\n";
@@ -44,7 +43,7 @@ class SearchAndReplace
                 $node = Node::load($nid);
                 if ($node && $node->isPublished()) {
                     $url = $node->toUrl()->toString();
-                    list($bHasEntity, $aLocations) = $this->checkFieldsForEntity($fieldNames, $search, $replace, $bDoReplace, $node, $aUnsupportedTypes);
+                    list($bHasEntity, $aLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $node, $aUnsupportedTypes);
                     if ($bHasEntity) {
                         echo "\n" . $url . "\n";
                         echo implode("\n", $aLocations);
@@ -67,7 +66,7 @@ class SearchAndReplace
     /**
      * Regex based scanner to identify all entities that use embedded media entities.
      *
-     * @param $fieldNames
+     * @param $restrictToFieldNames
      * @param $search string
      * @param string|null $replace
      * @param bool $bDoReplace
@@ -75,7 +74,7 @@ class SearchAndReplace
      * @param $aUnsupportedTypes
      * @return array
      */
-    private function checkFieldsForEntity($fieldNames, string $search, ?string $replace, bool $bDoReplace, $entity, &$aUnsupportedTypes)
+    private function checkFieldsForEntity($restrictToFieldNames, string $search, ?string $replace, bool $bDoReplace, $entity, &$aUnsupportedTypes)
     {
         $bHasEntity = false;
         $aLocations = [];
@@ -85,14 +84,13 @@ class SearchAndReplace
                 || $entity instanceof BlockContent)
             && ($entity->getFields() != null)) {
             foreach ($entity->getFields() as $name => $field) {
-                $fieldValue = $field->getString();
                 if ($field->getFieldDefinition()->getTargetBundle()) {
                     $type = $field->getFieldDefinition()->getType();
                     if ($type == 'entity_reference' || $type == 'entity_reference_revisions') {
                         foreach ($field as $item) {
                             $referenced_entity = $item->entity;
                             if ($referenced_entity != null) {
-                                list($bChildHasEntity, $aChildLocations) = $this->checkFieldsForEntity($fieldNames, $search, $replace, $bDoReplace, $referenced_entity, $aUnsupportedTypes);
+                                list($bChildHasEntity, $aChildLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $referenced_entity, $aUnsupportedTypes);
                                 $bHasEntity |= $bChildHasEntity;
                                 $aLocations = array_merge($aLocations, $aChildLocations);
                             }
@@ -101,19 +99,22 @@ class SearchAndReplace
                 }
                 $matches = [];
 
-                if( empty($fieldNames) || in_array($name, $fieldNames) ) {
-                    if (preg_match($search, $fieldValue, $matches)) {
-                        $bHasEntity |= true;
-                        $aLocations[] = "   * FOUND IN $name - [" . $entity->getEntityType()->id() . "]";
-                        // $aLocations[] = "     " . $matches[0];
+                if( empty($restrictToFieldNames) || in_array($name, $restrictToFieldNames) ) {
 
-                        if( $bDoReplace ) {
-                            if( $this->doReplace($entity, $field, $search, $replace) ) {
-                                $aLocations[] = "   * REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
-                            } else {
-                                $aLocations[] = "   * NOT REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
-                            }
+                    foreach($field->getIterator() as $fieldId=>$fieldItem) {
+                        $fieldValue = $fieldItem->getString();
+                        if (preg_match($search, $fieldValue, $matches)) {
+                            $bHasEntity |= true;
+                            $aLocations[] = "   * FOUND IN $name - [" . $entity->getEntityType()->id() . "]";
+                            // $aLocations[] = "     " . $matches[0];
+                        }
+                    }
 
+                    if ($bDoReplace) {
+                        if ($this->doReplace($entity, $field, $search, $replace)) {
+                            $aLocations[] = "   * REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
+                        } else {
+                            $aLocations[] = "   * NOT REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
                         }
                     }
                 }

@@ -41,7 +41,7 @@ class SearchAndReplace
             echo "\n";
             foreach ($nids as $nid) {
 
-                if (empty($moderationStates)) {
+                if (!$bDoReplace && empty($moderationStates)) {
                     $node = Node::load($nid);
                 } else {
                     $vid = \Drupal::entityTypeManager()

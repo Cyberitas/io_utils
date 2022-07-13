@@ -40,7 +40,18 @@ class SearchAndReplace
             $progressBar->start();
             echo "\n";
             foreach ($nids as $nid) {
-                $node = Node::load($nid);
+
+                if (empty($moderationStates)) {
+                    $node = Node::load($nid);
+                } else {
+                    $vid = \Drupal::entityTypeManager()
+                        ->getStorage('node')
+                        ->getLatestRevisionId($nid);
+                    $node = \Drupal::entityTypeManager()
+                        ->getStorage('node')
+                        ->loadRevision($vid);
+                }
+
                 if ($node) {
                     $url = $node->toUrl()->toString();
                     $moderationState = null;

@@ -19,18 +19,18 @@ class SearchAndReplace
         $this->output = $output;
     }
 
-    public function findByRegex(string $search, array $restrictToFieldNames, $unpublished = false ): int
+    public function findByRegex(string $search, array $restrictToFieldNames, array $moderationStates ): int
     {
-        return $this->findAndReplace($search, null, $restrictToFieldNames, false, $unpublished);
+        return $this->findAndReplace($search, null, $restrictToFieldNames, false, $moderationStates);
     }
 
-    public function replaceByRegex( string $search, string $replace, array $restrictToFieldNames ): int
+    public function replaceByRegex( string $search, string $replace, array $restrictToFieldNames, array $moderationStates ): int
     {
-        return $this->findAndReplace($search, $replace, $restrictToFieldNames, true);
+        return $this->findAndReplace($search, $replace, $restrictToFieldNames, true, $moderationStates);
     }
 
 
-    private function findAndReplace( string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false, bool $unpublished = false ): int
+    private function findAndReplace( string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false, array $moderationStates = [] ): int
     {
         $iFoundEntity = 0;
         $aUnsupportedTypes = [];
@@ -41,11 +41,38 @@ class SearchAndReplace
             echo "\n";
             foreach ($nids as $nid) {
                 $node = Node::load($nid);
-                if ($node && ($unpublished || $node->isPublished())) {
+                if ($node) {
                     $url = $node->toUrl()->toString();
+                    $moderationState = null;
+                    try {
+                        if( $node->get('moderation_state') ) {
+                            $moderationState = $node->get('moderation_state')->value;
+                        }
+                    } catch( \Exception $e ) {
+                        // ignore.
+                    }
+
+                    // Skip unpublished nodes if no moderation state is set.
+                    if (empty($moderationStates)) {
+                        if( !$node->isPublished() ) {
+                            continue;
+                        }
+                    }
+                    else {
+                        if( !in_array($moderationState, $moderationStates) ) {
+                            continue;
+                        }
+                    }
+
+
                     list($bHasEntity, $aLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $node, $aUnsupportedTypes);
                     if ($bHasEntity) {
-                        echo "\n" . $url . "\n";
+                        echo "\n" . $url;
+                        if( !$node->isPublished() && $moderationState ) {
+                            echo ' (' . $moderationState . ')';
+                        }
+                        echo "\n";
+
                         echo implode("\n", $aLocations);
                         $iFoundEntity++;
                     }

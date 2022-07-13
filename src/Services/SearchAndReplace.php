@@ -19,9 +19,9 @@ class SearchAndReplace
         $this->output = $output;
     }
 
-    public function findByRegex(string $search, array $restrictToFieldNames ): int
+    public function findByRegex(string $search, array $restrictToFieldNames, $unpublished = false ): int
     {
-        return $this->findAndReplace($search, null, $restrictToFieldNames, false);
+        return $this->findAndReplace($search, null, $restrictToFieldNames, false, $unpublished);
     }
 
     public function replaceByRegex( string $search, string $replace, array $restrictToFieldNames ): int
@@ -30,7 +30,7 @@ class SearchAndReplace
     }
 
 
-    private function findAndReplace( string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false ): int
+    private function findAndReplace( string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false, bool $unpublished = false ): int
     {
         $iFoundEntity = 0;
         $aUnsupportedTypes = [];
@@ -41,7 +41,7 @@ class SearchAndReplace
             echo "\n";
             foreach ($nids as $nid) {
                 $node = Node::load($nid);
-                if ($node && $node->isPublished()) {
+                if ($node && ($unpublished || $node->isPublished())) {
                     $url = $node->toUrl()->toString();
                     list($bHasEntity, $aLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $node, $aUnsupportedTypes);
                     if ($bHasEntity) {
@@ -83,6 +83,8 @@ class SearchAndReplace
                 || $entity instanceof Paragraph
                 || $entity instanceof BlockContent)
             && ($entity->getFields() != null)) {
+
+            $bReplaced = false;
             foreach ($entity->getFields() as $name => $field) {
                 if ($field->getFieldDefinition()->getTargetBundle()) {
                     $type = $field->getFieldDefinition()->getType();
@@ -101,55 +103,42 @@ class SearchAndReplace
 
                 if( empty($restrictToFieldNames) || in_array($name, $restrictToFieldNames) ) {
 
-                    foreach($field->getIterator() as $fieldId=>$fieldItem) {
-                        $fieldValue = $fieldItem->getString();
-                        if (preg_match($search, $fieldValue, $matches)) {
-                            $bHasEntity |= true;
-                            $aLocations[] = "   * FOUND IN $name - [" . $entity->getEntityType()->id() . "]";
-                            // $aLocations[] = "     " . $matches[0];
-                        }
-                    }
+                    $properties =  $field->getFieldDefinition()->getFieldStorageDefinition()->getPropertyDefinitions();
+                    foreach( $properties as $propName => $propDefinition ) {
+                        if( $propDefinition->getDataType() == 'string' ) {
+                            if( !in_array( $propName, ['class', 'type', 'format', 'langcode', 'target_id']) ) {
+                                foreach($field->getIterator() as $fieldId=>$fieldItem) {
+                                    try {
+                                        $old = $fieldItem->get($propName)->getValue();
 
-                    if ($bDoReplace) {
-                        if ($this->doReplace($entity, $field, $search, $replace)) {
-                            $aLocations[] = "   * REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
-                        } else {
-                            $aLocations[] = "   * NOT REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
+                                        if (preg_match($search, $old, $matches)) {
+                                            $bHasEntity |= true;
+                                            $aLocations[] = "   * FOUND IN $name - [" . $entity->getEntityType()->id() . "]";
+                                            // $aLocations[] = "     " . $matches[0];
+
+                                            if ($bDoReplace) {
+                                                $new = preg_replace($search, $replace, $old);
+                                                $fieldItem->set($propName, $new);
+                                                $bReplaced = true;
+                                                $aLocations[] = "   * REPLACED IN $name - [" . $entity->getEntityType()->id() . "]";
+                                            }
+                                        }
+                                    } catch(\Exception $e) {
+                                        $aLocations[] = "   * Error processing field $name - [Entity ID:" . $entity->getEntityType()->id() . "]. " . $e->getMessage();
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
 
+            if( $bReplaced ) {
+                $entity->save();
+            }
         } else {
             $aUnsupportedTypes[] = $entity->getEntityType()->id();
         }
         return [$bHasEntity, $aLocations];
-    }
-
-    private function doReplace( $entity, $field, $search, $replace ) {
-        $bReplaced = false;
-
-        try {
-            $properties =  $field->getFieldDefinition()->getFieldStorageDefinition()->getPropertyDefinitions();
-            foreach( $properties as $propName => $propDefinition ) {
-                if( $propDefinition->getDataType() == 'string' ) {
-                    if( !in_array( $propName, ['class', 'type', 'format', 'langcode', 'target_id']) ) {
-                        foreach($field->getIterator() as $fieldId=>$fieldItem) {
-                            $old = $fieldItem->get($propName)->getValue();
-                            $new = preg_replace($search, $replace, $old);
-                            $fieldItem->set( $propName, $new );
-                            $bReplaced = true;
-                        }
-                    }
-                }
-            }
-            if( $bReplaced ) {
-                $entity->save();
-            }
-        } catch (\Throwable $e) {
-            echo "\n! Error: " . $e->getMessage() . "\n";
-        }
-
-        return $bReplaced;
     }
 }

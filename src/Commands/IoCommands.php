@@ -19,11 +19,12 @@ class IoCommands extends DrushCommands {
      * Search all active entities for a regular expression
      * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
      * @option field-names Optional comma-separated list of entity types to search
+     * @option unpublished Optional flag to search unpublished (e.g. draft/archived) entities
      * @command io-utils:search
      * @usage io-utils:search "/example/" [--field-names body,field_example]
      *   Searches for the given regex expression in all active fields of all published entities
      */
-    public function search(string $search, $options = ['field-names' => NULL]) {
+    public function search(string $search, $options = ['field-names' => NULL, 'unpublished' => FALSE]) {
 
         $fieldNames = [];
         if( !empty($options['field-names']) ) {
@@ -31,7 +32,7 @@ class IoCommands extends DrushCommands {
         }
         $searchService = new Drupal\io_utils\Services\SearchAndReplace($this->output);
         ob_start();
-        $count = $searchService->findByRegex($search, $fieldNames);
+        $count = $searchService->findByRegex($search, $fieldNames, $options['unpublished']);
         $results = ob_get_clean();
 
         $this->io()->writeln($results);

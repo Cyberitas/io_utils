@@ -130,7 +130,7 @@ class ImageDecoder extends AbstractFieldDecoder implements FieldDecoderInterface
 
     // echo 'Contents imported, saving to '.$uri.'...'.". ";
 
-    $fileSaved = file_save_data($fileData, $uri, FileSystemInterface::EXISTS_RENAME);
+    $fileSaved = Drupal::service('file.repository')->writeData($fileData, $uri, FileSystemInterface::EXISTS_RENAME);
     // echo 'Save attempted...'."\n";
     if(!$fileSaved){
       echo 'Error saving image.'."\n";

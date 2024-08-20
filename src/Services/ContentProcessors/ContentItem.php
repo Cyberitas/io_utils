@@ -88,7 +88,7 @@ class ContentItem implements Serializable
   private $date;
 
   /**
-   * @return mixed
+   * @return string
    */
   public function getFormat(): string
   {

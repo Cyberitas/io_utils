@@ -77,7 +77,12 @@ class DrupalNodeImporter
       }
     }
 
-    $node->setPublished($saveFormat->getPostStatus());
+    if($saveFormat->getPostStatus()) {
+      $node->setPublished();
+    }
+    else {
+      $node->setUnpublished();
+    }
 
     foreach ($node->getFields() as $key => $values) {
       $definition = Drupal::service('entity_field.manager')->getFieldDefinitions('node', $node->bundle())[$key];

@@ -15,7 +15,7 @@ class DrupalFileExporter
     }
     $files = [];
     foreach($values->getIterator() as $key=>$value) {
-      $target_id = $value->target_id;
+      $target_id = $value->get('target_id')->getValue();
       $imageEntity = Drupal::entityTypeManager()->getStorage('file')->load($target_id);
       if(!$imageEntity){
         echo 'Image at id '.$target_id.' could not be found- terminating program.';

@@ -10,15 +10,12 @@ class Entity_reference_revisions__paragraphEncoder extends AbstractFieldEncoder 
 {
   /**
    * @inheritDoc
-   * @var $value EntityReferenceRevisionsItem
+   * @param EntityReferenceRevisionsItem $value
    */
   public function encodeItem($value)
   {
-    /** @var \Drupal\Core\Entity\Plugin\DataType\EntityAdapter $entityAdapter */
-    $entityAdapter = $value->get('entity')->getTarget();
-
     /** @var Drupal\paragraphs\Entity\Paragraph $referencedEntity */
-    $referencedEntity = $entityAdapter->getValue();
+    $referencedEntity = $value->get('entity')->getValue();
 
     $referencedEntityType = $referencedEntity->getEntityTypeId();
     if( $referencedEntityType !== 'paragraph' ) {
@@ -28,8 +25,8 @@ class Entity_reference_revisions__paragraphEncoder extends AbstractFieldEncoder 
     }
 
     $encodedValue = [
-      'target_id' => $value->target_id,
-      'target_revision_id' => $value->target_revision_id,
+      'target_id' => $value->get('target_id')->getValue(),
+      'target_revision_id' => $value->get('target_revision_id')->getValue(),
       'referenced_entity' => [
         'type' => $referencedEntityType,
       ],

@@ -47,7 +47,7 @@ class Entity_reference__block_contentEncoder extends AbstractFieldEncoder implem
   public function encodeItem($value)
   {
     return [
-      'target_id' => $value->target_id,
+      'target_id' => $value->get('target_id')->getValue(),
       'info' => null
     ];
   }

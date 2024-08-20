@@ -9,9 +9,9 @@ class PanelizerEncoder extends AbstractFieldEncoder implements FieldEncoderInter
   public function encodeItem($value)
   {
     return [
-      'view_mode' => $value->view_mode,
-      'default' => $value->default,
-      'panels_display' => $value->panels_display
+      'view_mode' => $value->get('view_mode')->getValue(),
+      'default' => $value->get('default')->getValue(),
+      'panels_display' => $value->get('panels_display')->getValue()
     ];
   }
 }

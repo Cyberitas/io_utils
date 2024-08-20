@@ -13,7 +13,7 @@ class Entity_referenceEncoder extends AbstractFieldEncoder implements FieldEncod
     public function encodeItem($value)
     {
       return [
-        'target_id' => $value->target_id,
+        'target_id' => $value->get('target_id')->getValue()
       ];
     }
 }

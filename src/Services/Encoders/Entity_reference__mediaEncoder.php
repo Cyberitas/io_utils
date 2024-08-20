@@ -10,15 +10,12 @@ class Entity_reference__mediaEncoder extends AbstractFieldEncoder implements Fie
 {
   /**
    * @inheritDoc
-   * @var $value EntityReferenceRevisionsItem
+   * @param EntityReferenceRevisionsItem $value
    */
   public function encodeItem($value)
   {
-    /** @var \Drupal\Core\Entity\Plugin\DataType\EntityAdapter $entityAdapter */
-    $entityAdapter = $value->get('entity')->getTarget();
-
     /** @var \Drupal\Core\Entity\EntityInterface $referencedEntity */
-    $referencedEntity = $entityAdapter->getValue();
+    $referencedEntity = $value->get('entity')->getValue();
 
     $referencedEntityType = $referencedEntity->getEntityTypeId();
     if( $referencedEntityType !== 'media' ) {
@@ -28,7 +25,7 @@ class Entity_reference__mediaEncoder extends AbstractFieldEncoder implements Fie
     }
 
     $encodedValue = [
-      'target_id' => $value->target_id,
+      'target_id' => $value->get('target_id')->getValue(),
       'referenced_entity' => [
         'type' => $referencedEntityType,
       ],

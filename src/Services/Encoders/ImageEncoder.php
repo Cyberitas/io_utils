@@ -53,11 +53,11 @@ class ImageEncoder extends AbstractFieldEncoder implements FieldEncoderInterface
   public function encodeItem($value)
   {
     return [
-      'target_id' => $value->target_id,
-      'alt' => $value->alt,
-      'title' => $value->title,
-      'width' => $value->width,
-      'height' => $value->height,
+      'target_id' => $value->get('target_id')->getValue(),
+      'alt' => $value->get('alt')->getValue(),
+      'title' => $value->get('title')->getValue(),
+      'width' => $value->get('width')->getValue(),
+      'height' => $value->get('height')->getValue(),
       'uri' => null,
       'path' => null
     ];

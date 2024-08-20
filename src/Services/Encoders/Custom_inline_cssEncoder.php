@@ -9,7 +9,7 @@ class Custom_inline_cssEncoder extends AbstractFieldEncoder implements FieldEnco
     public function encodeItem($value)
     {
       return [
-        'custom_inline_css' => $value->custom_inline_css
+        'custom_inline_css' => $value->get('custom_inline_css')->getValue()
       ];
     }
 }

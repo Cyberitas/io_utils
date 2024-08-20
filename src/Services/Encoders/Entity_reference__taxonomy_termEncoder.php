@@ -58,9 +58,9 @@ class Entity_reference__taxonomy_termEncoder extends AbstractFieldEncoder implem
   public function encodeItem($value)
   {
     // echo "Beginning encoding of new taxonomy term...\n";
-    $taxonomyEntity = Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($value->target_id);
+    $taxonomyEntity = Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($value->get('target_id')->getValue());
     if(!$taxonomyEntity){
-      echo "Warning: Taxonomy Entity could not be found! Target value: ".$value->target_id."\n";
+      echo "Warning: Taxonomy Entity could not be found! Target value: ".$value->get('target_id')->getValue()."\n";
       return null;
     }
     // echo 'Beginning saving of taxonomy term '.$taxonomyEntity->get('name')->get(0)->getValue()['value']."\n";
@@ -68,7 +68,7 @@ class Entity_reference__taxonomy_termEncoder extends AbstractFieldEncoder implem
 
     return [
       'name' => $taxonomyEntity->get('name')->get(0)->getValue()['value'],
-      'target_id' => $value->target_id,
+      'target_id' => $value->get('target_id')->getValue(),
       'path' => null
     ];
   }

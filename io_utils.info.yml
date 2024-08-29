@@ -4,6 +4,6 @@ description: "Provides Drush commands to allow users to deep import/export nodes
 package: IO Utilities
 core_version_requirement: ^9 || ^10
 author: Cyberitas Technologies, LLC.
-version: '4.1.0'
+version: '5.0.0'
 dependencies:
     - node

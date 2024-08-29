@@ -10,10 +10,10 @@ class Phone_overrideEncoder extends AbstractFieldEncoder implements FieldEncoder
     public function encodeItem($value)
     {
       return [
-        'sales_override' => $value->sales_override,
-        'support_override' => $value->support_override,
-        'override_priority' => $value->override_priority,
-        'callrail_support' => $value->callrail_support
+        'sales_override' => $value->get('sales_override')->getValue(),
+        'support_override' => $value->get('support_override')->getValue(),
+        'override_priority' => $value->get('override_priority')->getValue(),
+        'callrail_support' => $value->get('callrail_support')->getValue()
       ];
     }
 }

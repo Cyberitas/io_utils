@@ -9,10 +9,10 @@ class Contact_formEncoder extends AbstractFieldEncoder implements FieldEncoderIn
   public function encodeItem($value)
   {
     return [
-      'contact_type' => $value->contact_type,
-      'tagline' => $value->tagline,
-      'sfs_lead_source' => $value->sfs_lead_source,
-      'sfs_lead_sub_source' => $value->sfs_lead_sub_source,
+      'contact_type' => $value->get('contact_type')->getValue(),
+      'tagline' => $value->get('tagline')->getValue(),
+      'sfs_lead_source' => $value->get('sfs_lead_source')->getValue(),
+      'sfs_lead_sub_source' => $value->get('sfs_lead_sub_source')->getValue(),
     ];
   }
 }

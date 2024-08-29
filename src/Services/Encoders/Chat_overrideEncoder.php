@@ -10,7 +10,7 @@ class Chat_overrideEncoder extends AbstractFieldEncoder implements FieldEncoderI
     public function encodeItem($value)
     {
       return [
-        'chat_department_override' => $value->chat_department_override
+        'chat_department_override' => $value->get('chat_department_override')->getValue()
       ];
     }
 }

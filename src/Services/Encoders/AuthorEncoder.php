@@ -16,11 +16,11 @@ class AuthorEncoder extends AbstractFieldEncoder implements FieldEncoderInterfac
    */
   public function encodeItem($value)
   {
-    $authorEntity = Drupal::entityTypeManager()->getStorage('user')->load($value->target_id);
+    $authorEntity = Drupal::entityTypeManager()->getStorage('user')->load($value->get('target_id')->getValue());
     // echo 'Saved author name is '.$authorEntity->get('name')->get(0)->getValue()['value']."\n";
     return [
       'name' => $authorEntity->get('name')->get(0)->getValue()['value'],
-      'target_id' => $value->target_id,
+      'target_id' => $value->get('target_id')->getValue(),
     ];
   }
 }

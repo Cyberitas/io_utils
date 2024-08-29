@@ -70,7 +70,7 @@ abstract class AbstractTextWithEmbedEncoder implements FieldEncoderInterface
         ];
 
       } else {
-        echo "\nWARNING: Could not find related media item to export with UUID " . $referencedEntity->id() . "...";
+        echo "\nWARNING: Could not find related media item to export with UUID " . $uuid . "...";
       }
     }
 

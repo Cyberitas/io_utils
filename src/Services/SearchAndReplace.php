@@ -41,16 +41,8 @@ class SearchAndReplace
             echo "\n";
             foreach ($nids as $nid) {
 
-                if (!$bDoReplace && empty($moderationStates)) {
-                    $node = Node::load($nid);
-                } else {
-                    $vid = \Drupal::entityTypeManager()
-                        ->getStorage('node')
-                        ->getLatestRevisionId($nid);
-                    $node = \Drupal::entityTypeManager()
-                        ->getStorage('node')
-                        ->loadRevision($vid);
-                }
+              $nodeStorage = \Drupal::entityTypeManager()->getStorage('node');
+              $node = $nodeStorage->load($nid);
 
                 if ($node) {
                     $url = $node->toUrl()->toString();
@@ -128,7 +120,7 @@ class SearchAndReplace
                     $type = $field->getFieldDefinition()->getType();
                     if ($type == 'entity_reference' || $type == 'entity_reference_revisions') {
                         foreach ($field as $item) {
-                            $referenced_entity = $item->entity;
+                            $referenced_entity = $item->get('entity')->getValue();
                             if ($referenced_entity != null) {
                                 list($bChildHasEntity, $aChildLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $referenced_entity, $aUnsupportedTypes);
                                 $bHasEntity |= $bChildHasEntity;
@@ -145,7 +137,7 @@ class SearchAndReplace
                     foreach( $properties as $propName => $propDefinition ) {
                         if( $propDefinition->getDataType() == 'string' ) {
                             if( !in_array( $propName, ['class', 'type', 'format', 'langcode', 'target_id']) ) {
-                                foreach($field->getIterator() as $fieldId=>$fieldItem) {
+                                foreach($field as $fieldId=>$fieldItem) {
                                     try {
                                         $old = $fieldItem->get($propName)->getValue();
 

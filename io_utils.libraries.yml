@@ -1,0 +1,4 @@
+form_styles:
+  css:
+    theme:
+      css/io_utils_form.css: {}

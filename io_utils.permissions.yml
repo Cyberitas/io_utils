@@ -1,0 +1,4 @@
+administer io utils:
+  title: 'Administer IO Utils'
+  description: 'Perform search and replace operations using regex.'
+  restrict access: TRUE

@@ -9,3 +9,7 @@ services:
     class: Drupal\io_utils\Services\DrupalBlockContentExporter
   io_utils.block_content_importer:
     class: Drupal\io_utils\Services\DrupalBlockContentImporter
+  io_utils.search_and_replace:
+    class: Drupal\io_utils\Services\SearchAndReplace
+    arguments: ['@entity_type.manager', '@logger.factory']
+

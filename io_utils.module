@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function io_utils_theme() {
+  return [
+    'io_utils_search_replace_form' => [
+      'render element' => 'form',
+      'template' => 'io-utils-search-replace-form',
+    ],
+  ];
+}

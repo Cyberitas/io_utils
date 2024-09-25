@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class SearchReplaceForm extends FormBase
 {
-
+  private $searchResults;
   /**
    * The search and replace service.
    *
@@ -56,25 +56,49 @@ class SearchReplaceForm extends FormBase
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+
+    \Drupal::logger('io_utils')->notice('buildForm called'); //TODO: Debugging
+
     $form['#theme'] = 'io_utils_search_replace_form';
     $form['#attached']['library'][] = 'io_utils/form_styles';
 
     $request = \Drupal::request();
-    $replacement_done = $request->query->get('replacement_done');
+    $replacement_done = $form_state->get('replacement_done');
 
     if ($replacement_done) {
-      // Show only the Reset button after replacement
-      $form['actions'] = [
-        '#type' => 'actions',
-        'reset' => [
-          '#type' => 'submit',
-          '#value' => $this->t('Reset'),
-          '#submit' => ['::resetForm'],
-          '#limit_validation_errors' => [],
-        ],
-      ];
+      $replacement_results = $form_state->get('replacement_results');
+      if ($replacement_results) {
+        $form['replacement_results'] = [
+          '#type' => 'fieldset',
+          '#title' => $this->t('Replacement Results'),
+        ];
 
-      return $form;
+        $form['replacement_results']['summary'] = [
+          '#markup' => $replacement_results['summary'],
+          '#prefix' => '<div class="replacement-summary">',
+          '#suffix' => '</div>',
+        ];
+
+        $form['replacement_results']['detailed_output'] = [
+          '#type' => 'textarea',
+          '#title' => $this->t('Detailed Replacement Results'),
+          '#value' => $replacement_results['detailed_output'],
+          '#rows' => 20,
+          '#disabled' => TRUE,
+        ];
+
+        $form['actions'] = [
+          '#type' => 'actions',
+          'reset' => [
+            '#type' => 'submit',
+            '#value' => $this->t('Reset'),
+            '#submit' => ['::resetForm'],
+            '#limit_validation_errors' => [],
+          ],
+        ];
+
+        return $form;
+      }
     }
 
     // Get the current page from the request
@@ -90,6 +114,7 @@ class SearchReplaceForm extends FormBase
     $limit_to_fields = $request->query->get('limit_to_fields') ?? $user_input['limit_to_fields'] ?? $last_search['limit_to_fields'] ?? '';
     $moderation_states = $request->query->get('moderation_states') ?? $user_input['moderation_states'] ?? $last_search['moderation_states'] ?? '';
     $total_count = $request->query->get('total_count') ?? $form_state->get(['last_search', 'total_count']) ?? 0;
+
 
     // Determine if a search has been performed
     $search_performed = !empty($last_search);
@@ -111,6 +136,10 @@ class SearchReplaceForm extends FormBase
       ]);
       $form_state->set('step', $step);
     }
+
+    \Drupal::logger('io_utils')->notice('buildForm searchperformed: @searchperformed', [
+      '@searchperformed' => $search_performed,
+    ]); //TODO: Debugging
 
     $form['search'] = [
       '#type' => 'textfield',
@@ -179,6 +208,7 @@ class SearchReplaceForm extends FormBase
     // If we have a search term, perform the search
     if (!empty($search)) {
       $results = $this->performSearch($search, $limit_to_fields, $moderation_states, $this->itemsPerPage, $page);
+      $this->searchResults = $results;
 
       // Update total_count if it's not set or if it's different from the search results
       if ($total_count == 0 || $total_count != $results['count']) {
@@ -187,28 +217,32 @@ class SearchReplaceForm extends FormBase
       }
 
       // Calculate the range of items being displayed
-      $total_items = $results['count'];
+      $total_items =  $results['count'];
       $start_item = ($page * $this->itemsPerPage) + 1;
       $end_item = min($start_item + $this->itemsPerPage - 1, $total_items);
 
       $form['results']['summary'] = [
-        '#markup' => $total_items > 0
-          ? $this->t('Viewing Found Objects @start-@end (Total: @total)', [
-            '@start' => $start_item,
-            '@end' => $end_item,
-            '@total' => $total_items,
-          ])
-          : $this->t('@total Matching Objects Found', ['@total' => $total_items]),
-        '#prefix' => '<div class="search-results-summary">',
+        '#markup' => ($total_items > 0
+            ? $this->t('Viewing Found Objects @start-@end (Total: @total)', [
+              '@start' => $start_item,
+              '@end' => $end_item,
+              '@total' => $total_items,
+            ])
+            : $this->t('@total Matching Objects Found', ['@total' => $total_items])),
+        '#prefix' => '<div class="search-results-summary" style="background-color: white; padding: 10px;">',
         '#suffix' => '</div>',
       ];
 
-      $form['results']['output'] = [
-        '#type' => 'textarea',
-        '#value' => $results['output'],
-        '#rows' => $this->itemsPerPage,
-        '#disabled' => TRUE,
-      ];
+      if (!empty($results)) {
+        $output = $this->processResults($results, $form_state, 'search', $this->itemsPerPage);
+
+        $form['results']['output'] = [
+          '#type' => 'textarea',
+          '#value' => $output,
+          '#rows' => $this->itemsPerPage,
+          '#disabled' => TRUE,
+        ];
+      }
 
       // Force the pager to always show
       $total_pages = max(1, ceil($results['count'] / $this->itemsPerPage));
@@ -238,6 +272,11 @@ class SearchReplaceForm extends FormBase
     $limit_to_fields = $form_state->getValue('limit_to_fields');
     $moderation_states = $form_state->getValue('moderation_states');
 
+    \Drupal::logger('io_utils')->notice('submitForm called. replace_mode: @replace_mode, step: @step', [
+      '@replace_mode' => $form_state->getValue('replace_mode'),
+      '@step' => $form_state->getValue('step'),
+    ]); //TODO: Debugging
+
     try {
       // Process the inputs to ensure they are passed correctly
       $limit_to_fields_array = !empty($limit_to_fields) ? array_map('trim', explode(',', $limit_to_fields)) : [];
@@ -253,24 +292,89 @@ class SearchReplaceForm extends FormBase
       $step = $form_state->get('step');
 
       if ($replace_mode && $step === 'confirm') {
-        // Perform the replacement
-        $results = $this->searchReplaceService->replaceByRegex($search, $replace, $limit_to_fields_array, $moderation_states_array, $items_per_page, $page);
-        $replaced_count = $results['count'] ?? 0;
+        // Perform the replacement with a very high limit to get all results
+        $high_limit = 1000000; // Adjust this number as needed
+        $results = $this->searchReplaceService->replaceByRegex($search, $replace, $limit_to_fields_array, $moderation_states_array, $high_limit, 0);
+        $count = $results['count'] ?? 0;
 
-        // Set the status message
-        $this->messenger()->addStatus($this->t('Replaced @count occurrences.', ['@count' => $replaced_count]));
+        // Process replacement results
+        $output = '';
+        $fullyReplacedCount = 0;
+        $totalOccurrences = 0;
+        $successfulReplacements = 0;
+        $matchCounts = [];
+
+        // First, count total occurrences
+        foreach ($results['matches'] as $match) {
+          $matchCounts[$match['url']] = count($match['locations']);
+          $totalOccurrences += $matchCounts[$match['url']];
+        }
+
+        foreach ($results['matches'] as $match) {
+          $found = 0;
+          $replaced = 0;
+          $errors = 0;
+
+          foreach ($match['locations'] as $location) {
+            switch ($location['status']) {
+              case 'search':
+                $found++;
+                break;
+              case 'replace':
+                $replaced++;
+                $successfulReplacements++;
+                break;
+              case 'resumable error':
+                $errors++;
+                break;
+            }
+          }
+
+          $isFullyReplaced = ($replaced == $matchCounts[$match['url']]);
+          if ($isFullyReplaced) {
+            $fullyReplacedCount++;
+          }
+
+          $output .= sprintf(
+            "%s \"%s\" with \"%s\" at %s (Found: %d, Replaced: %d, Error: %d, Fully Replaced: %s)\n",
+            $isFullyReplaced ? "Replaced" : "Attempted replacement",
+            $search,
+            $replace,
+            $match['url'],
+            $found,
+            $replaced,
+            $errors,
+            $isFullyReplaced ? 'Yes' : 'No'
+          );
+        }
+
+        $summary = sprintf(
+          "Your search term was fully replaced in %d of %d entities (%d of %d occurrences).",
+          $fullyReplacedCount,
+          $count,
+          $successfulReplacements,
+          $totalOccurrences
+        );
+
+        // Store the replacement results in the form state
+        $form_state->set('replacement_results', [
+          'detailed_output' => $output,
+          'summary' => $summary,
+        ]);
+
+//        // Set the status message
+//        $this->messenger()->addStatus($this->t('Replaced @count occurrences.', ['@count' => $replaced_count]));
 
         // Redirect to the same page with replacement_done flag
-        $form_state->setRedirect('io_utils.search_replace', [], [
-          'query' => [
-            'replacement_done' => '1',
-          ],
-        ]);
+        $form_state->set('replacement_done', TRUE);
+        $form_state->setRebuild(TRUE);
 
         return;
       } else {
+        // FIXME: this is a hack to avoid calling search multiple times for perf issues
         // Perform the search
-        $results = $this->searchReplaceService->findByRegex($search, $limit_to_fields_array, $moderation_states_array, $items_per_page, $page);
+        //$results = $this->searchReplaceService->findByRegex($search, $limit_to_fields_array, $moderation_states_array, $items_per_page, $page);
+        $results = $this->searchResults;
         $this->processResults($results, $form_state, 'Found', $items_per_page);
       }
 
@@ -306,7 +410,7 @@ class SearchReplaceForm extends FormBase
       ]);
 
       // Ensure the form is rebuilt to show updated results and pager
-      $form_state->setRebuild(TRUE);
+      //$form_state->setRebuild(TRUE);
 
     } catch (\Exception $e) {
       $this->messenger()->addError($this->t('An error occurred during the operation: @error', ['@error' => $e->getMessage()]));
@@ -315,31 +419,31 @@ class SearchReplaceForm extends FormBase
   }
 
 
-
-  public function confirmSubmit(array &$form, FormStateInterface $form_state)
-  {
-    $search = $form_state->get('search');
-    $replace = $form_state->get('replace');
-    $limit_to_fields = $form_state->get('limit_to_fields');
-    $moderation_states = $form_state->get('moderation_states');
-    $items_per_page = $form_state->get('items_per_page');
-
-    try {
-      $limit_to_fields_array = !empty($limit_to_fields) ? array_map('trim', explode(',', $limit_to_fields)) : [];
-      $moderation_states_array = !empty($moderation_states) ? array_map('trim', explode(',', $moderation_states)) : [];
-
-      $results = $this->searchReplaceService->replaceByRegex($search, $replace, $limit_to_fields_array, $moderation_states_array, $items_per_page);
-      $this->processResults($results, $form_state, 'Replaced', $items_per_page);
-
-      $this->messenger()->addStatus($this->t('Replacement completed successfully.'));
-    } catch (\Exception $e) {
-      $this->messenger()->addError($this->t('An error occurred during the replace operation: @error', ['@error' => $e->getMessage()]));
-      $form_state->set('results', 'Error occurred during replace operation.');
-    }
-
-    $form_state->set('step', 'search');
-    $form_state->setRebuild(TRUE);
-  }
+//
+//  public function confirmSubmit(array &$form, FormStateInterface $form_state)
+//  {
+//    $search = $form_state->get('search');
+//    $replace = $form_state->get('replace');
+//    $limit_to_fields = $form_state->get('limit_to_fields');
+//    $moderation_states = $form_state->get('moderation_states');
+//    $items_per_page = $form_state->get('items_per_page');
+//
+//    try {
+//      $limit_to_fields_array = !empty($limit_to_fields) ? array_map('trim', explode(',', $limit_to_fields)) : [];
+//      $moderation_states_array = !empty($moderation_states) ? array_map('trim', explode(',', $moderation_states)) : [];
+//
+//      $results = $this->searchReplaceService->replaceByRegex($search, $replace, $limit_to_fields_array, $moderation_states_array, $items_per_page);
+//      $this->processResults($results, $form_state, 'Replaced', $items_per_page);
+//
+//      $this->messenger()->addStatus($this->t('Replacement completed successfully.'));
+//    } catch (\Exception $e) {
+//      $this->messenger()->addError($this->t('An error occurred during the replace operation: @error', ['@error' => $e->getMessage()]));
+//      $form_state->set('results', 'Error occurred during replace operation.');
+//    }
+//
+//    $form_state->set('step', 'search');
+//    $form_state->setRebuild(TRUE);
+//  }
 
 
   /**
@@ -356,19 +460,24 @@ class SearchReplaceForm extends FormBase
   /**
    * Helper function to process and display results.
    */
-  private function processResults(array $results, FormStateInterface $form_state, string $action, int $items_per_page) {
+  private function processResults(array $results, FormStateInterface $form_state, string $action, int $items_per_page): string {
     $total_items = $results['count'];
 
-    $output = "";
+    $output = '';
     foreach ($results['matches'] as $match) {
       $output .= "URL: {$match['url']}\n";
       $output .= "Type: {$match['type']}\n";
       $output .= "Title: {$match['title']}\n";
-      $output .= "Published: " . ($match['published'] ? 'Yes' : 'No') . "\n";
-      if (isset($match['moderation_state'])) {
-        $output .= "Moderation State: {$match['moderation_state']}\n";
+      $output .= "Moderation State: " . ($match['moderation_state'] ?: 'N/A') . "\n";
+      $output .= "Locations:\n";
+      foreach ($match['locations'] as $location) {
+        if (is_array($location) && isset($location['message'])) {
+          $output .= "  {$location['message']}\n";
+        } elseif (is_string($location)) {
+          $output .= "  $location\n";
+        }
       }
-      $output .= "Locations:\n" . implode("\n", $match['locations']) . "\n\n";
+      $output .= "---\n\n";
     }
 
     if (isset($results['unsupported_types'])) {
@@ -386,30 +495,17 @@ class SearchReplaceForm extends FormBase
     $form_state->set('pager_total', ceil($total_items / $items_per_page));
     $form_state->set('pager_page_count', $current_page + 1);
     $form_state->set('pager_total_items', $total_items);
+
+    return $output;
   }
 
   protected function performSearch($search, $limit_to_fields, $moderation_states, $limit, $page) {
     $limit_to_fields_array = !empty($limit_to_fields) ? array_map('trim', explode(',', $limit_to_fields)) : [];
     $moderation_states_array = !empty($moderation_states) ? array_map('trim', explode(',', $moderation_states)) : [];
 
-    $results = $this->searchReplaceService->findByRegex($search, $limit_to_fields_array, $moderation_states_array, $limit, $page);
-    $output = "";
+    \Drupal::logger('io_utils')->notice('performSearch called'); //TODO: Debugging
 
-    foreach ($results['matches'] as $match) {
-      $output .= "URL: {$match['url']}\n";
-      $output .= "Type: {$match['type']}\n";
-      $output .= "Title: {$match['title']}\n";
-      $output .= "Published: " . ($match['published'] ? 'Yes' : 'No') . "\n";
-      if (isset($match['moderation_state'])) {
-        $output .= "Moderation State: {$match['moderation_state']}\n";
-      }
-      $output .= "Locations:\n" . implode("\n", $match['locations']) . "\n\n";
-    }
-
-    return [
-      'output' => $output,
-      'count' => $results['count'],
-    ];
+    return $this->searchReplaceService->findByRegex($search, $limit_to_fields_array, $moderation_states_array, $limit, $page);
   }
 
   public function resetForm(array $form, FormStateInterface $form_state) {

@@ -52,50 +52,139 @@ class IoCommands extends DrushCommands {
       return;
     }
 
-    $this->output()->writeln("Found {$results['count']} matches:");
-
-    foreach ($results['items'] as $item) {
-      $this->output()->writeln("Node ID: {$item['nid']}, Entity Type: {$item['entity_type']}, Bundle: {$item['bundle']}, Field: {$item['field']}, Delta: {$item['delta']}");
-      $this->output()->writeln("Content: {$item['content']}");
-      $this->output()->writeln("---");
+    $totalOccurrences = 0;
+    foreach ($results['matches'] as $match) {
+      $totalOccurrences += count($match['locations']);
     }
+
+    $output = "Found {$totalOccurrences} Occurrences in {$results['count']} Objects:\n\n";
+
+    foreach ($results['matches'] as $match) {
+      $output .= "URL: {$match['url']}\n";
+      $output .= "Type: {$match['type']}\n";
+      $output .= "Title: {$match['title']}\n";
+      $output .= "Moderation State: " . ($match['moderation_state'] ?: 'N/A') . "\n";
+      $output .= "Locations:\n";
+      foreach ($match['locations'] as $location) {
+        $output .= "  {$location['message']}\n";
+      }
+      $output .= "---\n\n";
+    }
+
+    $this->output()->writeln($output);
   }
 
-    /**
-     * Search and replace all active entities for a regular expression with a replacement, allowing back references
-     * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
-     * @param string $replace The replacement string, e.g. "bar-$1-baz"
-     * @option field-names Optional comma-separated list of entity types to search/replace
-     * @option moderation-states Optional comma-separated list of moderation status to search (e.g. draft/archived), defaults to all published states
-     * @command io-utils:replace
-     * @usage io-utils:replace "/^foo-(.*)-baz$/" "bar-$1-baz" [--field-names body,field_example --moderation-states state_example]
-     *   Searches for the given regex expression in all active fields of all published entities, and replaces it with the given replacement string
-     */
-    public function replace(string $search, string $replace, $options = ['field-names' => NULL, 'moderation-states' => NULL]) {
+  /**
+   * Search and replace all active entities for a regular expression with a replacement, allowing back references
+   * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
+   * @param string $replace The replacement string, e.g. "bar-$1-baz"
+   * @option field-names Optional comma-separated list of entity types to search/replace
+   * @option moderation-states Optional comma-separated list of moderation status to search (e.g. draft/archived), defaults to all published states
+   * @command io-utils:replace
+   * @usage io-utils:replace "/^foo-(.*)-baz$/" "bar-$1-baz" [--field-names body,field_example --moderation-states state_example]
+   *   Searches for the given regex expression in all active fields of all published entities, and replaces it with the given replacement string
+   */
+  public function replace(string $search, string $replace, $options = ['field-names' => NULL, 'moderation-states' => NULL])
+  {
+    $fieldNames = !empty($options['field-names']) ? explode(',', $options['field-names']) : [];
+    $moderationStates = !empty($options['moderation-states']) ? explode(',', $options['moderation-states']) : [];
 
-        if (!$this->io()->confirm(dt('Are you sure you wish to continue with a global search and replace (you should back up the DB first)?'))) {
-            throw new UserAbortException();
-        }
+    // First, perform a search to show the results
+    $page = 0;
+    $limit = 10000; // Or any other suitably high number
+    $results = $this->searchReplaceService->findByRegex($search, $fieldNames, $moderationStates, $limit, $page);
+    $successfulReplacements = 0;
 
-        $fieldNames = [];
-        if( !empty($options['field-names']) ) {
-            $fieldNames = explode(',', $options['field-names']);
-        }
-
-        $moderationStates = [];
-        if( !empty($options['moderation-states']) ) {
-            $moderationStates = explode(',', $options['moderation-states']);
-        }
-
-        $searchService = new Drupal\io_utils\Services\SearchAndReplace($this->output);
-        ob_start();
-        $count = $searchService->replaceByRegex($search, $replace, $fieldNames, $moderationStates);
-        $results = ob_get_clean();
-
-        $this->io()->writeln($results);
-        $this->io()->success("Your search term was replaced in $count entities.");
+    if (empty($results['count'])) {
+      $this->output()->writeln("No matches found. No replacements will be made.");
+      return;
     }
 
+    $matchCounts = [];
+    $totalOccurrences = 0;
+    foreach ($results['matches'] as $match) {
+      $matchCount = count($match['locations']);
+      $matchCounts[$match['url']] = $matchCount;
+      $totalOccurrences += $matchCount;
+    }
+
+    $this->output()->writeln("Found {$totalOccurrences} Occurrences in {$results['count']} Objects:");
+
+    $output = '';
+    foreach ($results['matches'] as $match) {
+      $output .= "URL: {$match['url']}\n";
+      $output .= "Type: {$match['type']}\n";
+      $output .= "Title: {$match['title']}\n";
+      $output .= "Moderation State: " . ($match['moderation_state'] ?: 'N/A') . "\n";
+      $output .= "Locations:\n";
+      foreach ($match['locations'] as $location) {
+        $output .= "  {$location['message']}\n";
+      }
+      $output .= "---\n\n";
+    }
+
+    $this->output()->writeln($output);
+
+    // Ask for confirmation
+    if (!$this->io()->confirm(dt('Are you sure you wish to proceed with the replacement on these @count objects (@occurrences occurrences) (you should back up the DB first)?', ['@count' => $results['count'], '@occurrences' => $totalOccurrences]))) {
+      throw new UserAbortException();
+    }
+
+    // Perform the replacement
+    $replacementResults = $this->searchReplaceService->replaceByRegex($search, $replace, $fieldNames, $moderationStates, $limit, $page);
+
+    $count = $replacementResults['count'];
+    $output = '';
+    $fullyReplacedCount = 0;
+
+    // Generate detailed output
+    foreach ($replacementResults['matches'] as $match) {
+      $found = 0;
+      $replaced = 0;
+      $errors = 0;
+
+      foreach ($match['locations'] as $location) {
+        switch ($location['status']) {
+          case 'search':
+            $found++;
+            break;
+          case 'replace':
+            $replaced++;
+            $successfulReplacements++;
+            break;
+          case 'resumable error':
+            $errors++;
+            break;
+        }
+      }
+
+      $isFullyReplaced = ($replaced == $matchCounts[$match['url']]);
+      if ($isFullyReplaced) {
+        $fullyReplacedCount++;
+      }
+
+      $output .= sprintf(
+        "%s \"%s\" with \"%s\" at %s (Found: %d, Replaced: %d, Error: %d, Fully Replaced: %s)\n",
+        $isFullyReplaced ? "Replaced" : "Attempted replacement",
+        $search,
+        $replace,
+        $match['url'],
+        $found,
+        $replaced,
+        $errors,
+        $isFullyReplaced ? 'Yes' : 'No'
+      );
+    }
+
+    $this->output()->writeln($output);
+    $this->io()->success(sprintf(
+      "Your search term was fully replaced in %d of %d entities (%d of %d occurrences).",
+      $fullyReplacedCount,
+      $count,
+      $successfulReplacements,
+      $totalOccurrences
+    ));
+  }
 
   /**
    * Exports an entity by ID to a JSON file.

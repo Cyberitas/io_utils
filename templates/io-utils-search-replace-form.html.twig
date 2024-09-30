@@ -6,24 +6,16 @@
 #}
 
 <div class="search-replace-form">
+  {{ form.search_summary }}
   {{ form.search }}
   {{ form.replace }}
   {{ form.limit_to_fields }}
   {{ form.moderation_states }}
   {{ form.actions }}
-
-  {% if form.results %}
-    <div class="search-results">
-      {% if form.results.summary %}
-        {{ form.results.summary }}
-      {% endif %}
-      {{ form.results.output }}
-      {% if form.results.pager %}
-        {{ form.results.pager }}
-      {% endif %}
-    </div>
-  {% endif %}
+  {{ form.message }}
+  {{ form.results }}
+  {{ form.pager}}
 
   {# Render any remaining form elements #}
-  {{ form|without('search', 'replace', 'limit_to_fields', 'moderation_states', 'actions', 'results') }}
+  {{ form|without( 'search_summary', 'search', 'replace', 'limit_to_fields', 'moderation_states', 'actions', 'message', 'results', 'pager' ) }}
 </div>

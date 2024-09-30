@@ -42,10 +42,7 @@ class IoCommands extends DrushCommands {
     $limit_to_fields = $options['limit-to-fields'] ? explode(',', $options['limit-to-fields']) : [];
     $moderation_states = $options['moderation-states'] ? explode(',', $options['moderation-states']) : [];
 
-    $page = 0;
-    $limit = 10000; // Or any other suitably high number
-
-    $results = $this->searchReplaceService->findByRegex($pattern, $limit_to_fields, $moderation_states, $limit, $page);
+    $results = $this->searchReplaceService->findByRegex($pattern, $limit_to_fields, $moderation_states);
 
     if (empty($results['count'])) {
       $this->output()->writeln("No matches found.");
@@ -90,9 +87,8 @@ class IoCommands extends DrushCommands {
     $moderationStates = !empty($options['moderation-states']) ? explode(',', $options['moderation-states']) : [];
 
     // First, perform a search to show the results
-    $page = 0;
-    $limit = 10000; // Or any other suitably high number
-    $results = $this->searchReplaceService->findByRegex($search, $fieldNames, $moderationStates, $limit, $page);
+
+    $results = $this->searchReplaceService->findByRegex($search, $fieldNames, $moderationStates);
     $successfulReplacements = 0;
 
     if (empty($results['count'])) {
@@ -131,7 +127,7 @@ class IoCommands extends DrushCommands {
     }
 
     // Perform the replacement
-    $replacementResults = $this->searchReplaceService->replaceByRegex($search, $replace, $fieldNames, $moderationStates, $limit, $page);
+    $replacementResults = $this->searchReplaceService->replaceByRegex($search, $replace, $fieldNames, $moderationStates);
 
     $count = $replacementResults['count'];
     $output = '';

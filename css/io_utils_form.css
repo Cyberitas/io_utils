@@ -1,5 +1,53 @@
-.custom-results-wrapper textarea {
-  font-family: Arial, sans-serif;
-  font-size: 16pt;
-  font-weight: bold;
+.indented {
+  margin-left: 20px;
+}
+
+.double-indented {
+  margin-left: 40px;
+}
+
+.pager-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pager-button {
+  margin: 0 10px;
+  padding: 5px 15px;
+  position: relative;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.pager-button:hover {
+  background-color: #e0e0e0;
+}
+
+.pager-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pager-button::before,
+.pager-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.pager-button[name="prev"]::before {
+  left: 5px;
+  border-right: 6px solid #333;
+}
+
+.pager-button[name="next"]::after {
+  right: 5px;
+  border-left: 6px solid #333;
 }

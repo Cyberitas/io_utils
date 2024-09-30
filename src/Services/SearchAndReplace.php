@@ -24,15 +24,14 @@ class SearchAndReplace
         $this->logger = $loggerFactory->get('io_utils');
     }
 
-    public function findByRegex(string $search, array $restrictToFieldNames, array $moderationStates, $limit, $page = 0): array
+    public function findByRegex(string $search, array $restrictToFieldNames, array $moderationStates): array
     {
-        \Drupal::logger('io_utils')->notice('findByRegex called'); //TODO: Debugging
-        return $this->findAndReplace($search, null, $restrictToFieldNames, false, $moderationStates, $limit, $page);
+        return $this->findAndReplace($search, null, $restrictToFieldNames, false, $moderationStates);
     }
 
-    public function replaceByRegex(string $search, string $replace, array $restrictToFieldNames, array $moderationStates, $limit, $page = 0): array
+    public function replaceByRegex(string $search, string $replace, array $restrictToFieldNames, array $moderationStates): array
     {
-        return $this->findAndReplace($search, $replace, $restrictToFieldNames, true, $moderationStates, $limit, $page);
+        return $this->findAndReplace($search, $replace, $restrictToFieldNames, true, $moderationStates);
 
     }
 
@@ -44,28 +43,25 @@ class SearchAndReplace
      * @param array $restrictToFieldNames Array of field names to restrict the search to
      * @param bool $bDoReplace Whether to perform the replacement (default: false)
      * @param array $moderationStates Array of moderation states to filter by (default: empty array)
-     * @param int $limit Maximum number of results to return (default: 10)
-     * @param int $page Page number for pagination (default: 0)
      * @return array{
      *     count: int,
      *     matches: array{
      *         url: string,
      *         type: string,
      *         title: string,
+     *         moderation_state: string,
      *         locations: array{
      *             status: string,
      *             message: string
      *         },
-     *         published: string,
-     *         moderation_state: string
-     *     }
+ *     }
      * } An array containing 'count' (total matches) and 'matches' (array of matching items)
      * @throws InvalidPluginDefinitionException
      * @throws PluginNotFoundException
      * @throws EntityMalformedException
      */
 
-    private function findAndReplace(string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false, array $moderationStates = [], int $limit = 10, int $page = 0): array
+    private function findAndReplace(string $search, ?string $replace, array $restrictToFieldNames, bool $bDoReplace = false, array $moderationStates = []): array
     {
         $results = [
             'count' => 0,
@@ -77,7 +73,6 @@ class SearchAndReplace
         if ($nids) {
             $this->logger->info("Starting search and replace operation.");
             $total_count = 0;
-            $offset = $page * $limit;
             $processed_count = 0;
 
             foreach ($nids as $nid) {
@@ -108,20 +103,18 @@ class SearchAndReplace
                     list($bHasEntity, $aLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $node, $aUnsupportedTypes);
                     if ($bHasEntity) {
                         $total_count++;
-                        if ($total_count > $offset && $processed_count < $limit) {
-                            $formattedLocations = [];
-                            foreach ($aLocations as $location) {
-                                $formattedLocations[] = $location['message'];
-                            }
+//                            $formattedLocations = [];
+//                            foreach ($aLocations as $location) {
+//                                $formattedLocations[] = $location['message'];
+//                            }
                             $results['matches'][] = [
                                 'url' => $url,
                                 'type' => $node->getType(),
                                 'title' => $node->getTitle(),
-                                'locations' => $aLocations,  // Use the full $aLocations array here
-                                'published' => $node->isPublished(),
                                 'moderation_state' => $moderationState,
+                                'locations' => $aLocations,  // Use the full $aLocations array here
                             ];
-                            $processed_count++;
+//                            $processed_count++;
 
 //                            $this->logger->info("Match found at {url}", ['url' => $url]);
 //                            if (!$node->isPublished() && $moderationState) {
@@ -134,7 +127,6 @@ class SearchAndReplace
             }
             $results['count'] = $total_count;
             $this->logger->info("Search and replace operation completed. Total matches: {count}", ['count' => $total_count]);
-        }
 
         if (sizeof($aUnsupportedTypes) > 0) {
             $results['unsupported_types'] = array_unique($aUnsupportedTypes);
@@ -195,19 +187,14 @@ class SearchAndReplace
                                                 'status' => 'search',
                                                 'message' => "   * FOUND IN $name - [" . $entity->getEntityType()->id() . "]"
                                             ];
-
-                                        if ($bDoReplace) {
-//                                            // Throw an exception for block content entries" TODO: Test Code Remove!
-//                                            if ($entity->getEntityType()->id() === 'block_content') {
-//                                                throw new \Exception('Simulated error for testing purposes');
-//                                            }
-                                            $new = preg_replace($search, $replace, $old);
-                                            $fieldItem->set($propName, $new);
-                                            $bReplaced = true;
-                                            $aLocations[] = [
-                                                'status' => 'replace',
-                                                'message' => "   * REPLACED IN $name - [" . $entity->getEntityType()->id() . "]"
-                                            ];
+                                            if ($bDoReplace) {
+                                                $new = preg_replace($search, $replace, $old);
+                                                $fieldItem->set($propName, $new);
+                                                $bReplaced = true;
+                                                $aLocations[] = [
+                                                    'status' => 'replace',
+                                                    'message' => "   * REPLACED IN $name - [" . $entity->getEntityType()->id() . "]"
+                                                ];
                                             }
                                         }
                                     } catch (\Exception $e) {

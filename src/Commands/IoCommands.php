@@ -54,7 +54,7 @@ class IoCommands extends DrushCommands {
       $totalOccurrences += count($match['locations']);
     }
 
-    $output = "Found {$totalOccurrences} Occurrences in {$results['count']} Objects:\n\n";
+    $output = "Found {$totalOccurrences} fields in {$results['count']} entities:\n\n";
 
     foreach ($results['matches'] as $match) {
       $output .= "URL: {$match['url']}\n";
@@ -89,7 +89,6 @@ class IoCommands extends DrushCommands {
     // First, perform a search to show the results
 
     $results = $this->searchReplaceService->findByRegex($search, $fieldNames, $moderationStates);
-    $successfulReplacements = 0;
 
     if (empty($results['count'])) {
       $this->output()->writeln("No matches found. No replacements will be made.");
@@ -104,7 +103,7 @@ class IoCommands extends DrushCommands {
       $totalOccurrences += $matchCount;
     }
 
-    $this->output()->writeln("Found {$totalOccurrences} Occurrences in {$results['count']} Objects:");
+    $this->output()->writeln("Found {$totalOccurrences} fields in {$results['count']} entities:");
 
     $output = '';
     foreach ($results['matches'] as $match) {
@@ -122,19 +121,32 @@ class IoCommands extends DrushCommands {
     $this->output()->writeln($output);
 
     // Ask for confirmation
-    if (!$this->io()->confirm(dt('Are you sure you wish to proceed with the replacement on these @count objects (@occurrences occurrences) (you should back up the DB first)?', ['@count' => $results['count'], '@occurrences' => $totalOccurrences]))) {
+    if (!$this->io()->confirm(dt('Are you sure you wish to proceed with the replacement on these @count entities (@occurrences fields) (you should back up the DB first)?', ['@count' => $results['count'], '@occurrences' => $totalOccurrences]))) {
       throw new UserAbortException();
     }
 
     // Perform the replacement
-    $replacementResults = $this->searchReplaceService->replaceByRegex($search, $replace, $fieldNames, $moderationStates);
+    $results = $this->searchReplaceService->replaceByRegex($search, $replace, $fieldNames, $moderationStates);
 
-    $count = $replacementResults['count'];
-    $output = '';
+
+    // Format For Replacement Results
+    $total_results = $results['count'];
     $fullyReplacedCount = 0;
+    $totalOccurrences = 0;
+    $successfulReplacements = 0;
+    $matchCounts = [];
+    $results_output = "";
 
-    // Generate detailed output
-    foreach ($replacementResults['matches'] as $match) {
+    // First, count total occurrences
+    foreach ($results['matches'] as $match) {
+      $searchCount = count(array_filter($match['locations'], function($location) {
+        return $location['status'] === 'search';
+      }));
+      $matchCounts[$match['url']] = $searchCount;
+      $totalOccurrences += $searchCount;
+    }
+
+    foreach ($results['matches'] as $match) {
       $found = 0;
       $replaced = 0;
       $errors = 0;
@@ -159,7 +171,7 @@ class IoCommands extends DrushCommands {
         $fullyReplacedCount++;
       }
 
-      $output .= sprintf(
+      $results_output .= sprintf(
         "%s \"%s\" with \"%s\" at %s (Found: %d, Replaced: %d, Error: %d, Fully Replaced: %s)\n",
         $isFullyReplaced ? "Replaced" : "Attempted replacement",
         $search,
@@ -172,14 +184,21 @@ class IoCommands extends DrushCommands {
       );
     }
 
-    $this->output()->writeln($output);
-    $this->io()->success(sprintf(
-      "Your search term was fully replaced in %d of %d entities (%d of %d occurrences).",
+    $message_output = sprintf(
+      "Your search term was fully replaced in %d of %d entities (%d of %d fields).  Note that due to content sharing, replacement counts may not match search counts exactly.",
       $fullyReplacedCount,
-      $count,
+      $total_results,
       $successfulReplacements,
       $totalOccurrences
-    ));
+    );
+
+    // Log the replacement results array for audit purposes
+    $log_message = $message_output . $results_output;
+   \Drupal::logger('io_utils')->debug($log_message);
+
+    $this->output()->writeln($results_output);
+    $this->output()->writeln($message_output);
+
   }
 
   /**

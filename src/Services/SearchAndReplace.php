@@ -32,7 +32,6 @@ class SearchAndReplace
     public function replaceByRegex(string $search, string $replace, array $restrictToFieldNames, array $moderationStates): array
     {
         return $this->findAndReplace($search, $replace, $restrictToFieldNames, true, $moderationStates);
-
     }
 
     /**
@@ -90,6 +89,7 @@ class SearchAndReplace
                         // ignore.
                     }
 
+
                     if (empty($moderationStates)) {
                         if (!$node->isPublished()) {
                             continue;
@@ -103,10 +103,7 @@ class SearchAndReplace
                     list($bHasEntity, $aLocations) = $this->checkFieldsForEntity($restrictToFieldNames, $search, $replace, $bDoReplace, $node, $aUnsupportedTypes);
                     if ($bHasEntity) {
                         $total_count++;
-//                            $formattedLocations = [];
-//                            foreach ($aLocations as $location) {
-//                                $formattedLocations[] = $location['message'];
-//                            }
+
                             $results['matches'][] = [
                                 'url' => $url,
                                 'type' => $node->getType(),
@@ -114,13 +111,6 @@ class SearchAndReplace
                                 'moderation_state' => $moderationState,
                                 'locations' => $aLocations,  // Use the full $aLocations array here
                             ];
-//                            $processed_count++;
-
-//                            $this->logger->info("Match found at {url}", ['url' => $url]);
-//                            if (!$node->isPublished() && $moderationState) {
-//                                $this->logger->info('Moderation state: {state}', ['state' => $moderationState]);
-//                            }
-//                            $this->logger->info(implode("\n", $formattedLocations));
                         }
                     }
                 }
@@ -214,14 +204,12 @@ class SearchAndReplace
                     }
                 }
             }
-
-            if ($bReplaced) {
-                $entity->save();
-            }
+        if ($bReplaced) {
+            $entity->save();
+        }
         } else {
             $aUnsupportedTypes[] = $entity->getEntityType()->id();
         }
-
         return [$bHasEntity, $aLocations];
     }
 }

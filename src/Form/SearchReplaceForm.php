@@ -6,26 +6,23 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\io_utils\Services\SearchAndReplace;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Url;
 
 /**
  * Form for regex search and replace.
  */
 class SearchReplaceForm extends FormBase
 {
-  /**
-   * {@inheritdoc}
-   */
-  // old code
-//  public function getFormId()
-//  {
-//    return 'io_utils_search_replace_form';
-//  }
-//
-
   const ITEMS_PER_PAGE = 10;
 
   protected $searchAndReplaceService;
 
+  /**
+   * Constructs a new SearchReplaceForm.
+   *
+   * @param \Drupal\io_utils\Services\SearchAndReplace $searchAndReplaceService
+   *   The search and replace service.
+   */
   public function __construct(SearchAndReplace $searchAndReplaceService) {
     $this->searchAndReplaceService = $searchAndReplaceService;
   }
@@ -33,40 +30,55 @@ class SearchReplaceForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container)
-  {
-    $service = $container->get('io_utils.search_and_replace');
-    if (!$service instanceof SearchAndReplace) {
+  public static function create(ContainerInterface $container) {
+    $searchAndReplaceService = $container->get('io_utils.search_and_replace');
+
+    if (!$searchAndReplaceService instanceof SearchAndReplace) {
       throw new \InvalidArgumentException('Service is not an instance of SearchAndReplace');
     }
-    return new static($service);
+
+    return new static($searchAndReplaceService);
   }
 
-  public function getFormId()
-  {
-    return 'io_utils_search_form';
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'io_utils_search_replace_form';
   }
 
   public function buildForm(array $form, FormStateInterface $form_state)
   {
+    $urlGenerator = \Drupal::service('url_generator');
     $form['#theme'] = 'io_utils_search_replace_form';
     $form['#attached']['library'][] = 'io_utils/form_styles';
     $results = $form_state->get('search_results');
-    $has_matches = ($results['count'] > 0);
+    $has_matches = ($results !== null) && ($results['count'] > 0);
+    $replacement_done = $form_state->get('replacement_done');
 
-      // Display search summary (conditional on having already done a search)
-      $form['search_summary'] = [
-        '#type' => 'markup',
-        '#markup' => $this->generateSearchSummary($form_state),
-        '#prefix' => '<div class="search-summary">',
-        '#suffix' => '</div>',
-        '#access' => $has_matches,
-      ];
+    // Display search summary (conditional on having already done a search)
+    $form['help_link'] = [
+      '#type' => 'markup',
+      '#prefix' => '<div class="help-link-right">',
+      '#suffix' => '</div>',
+      '#markup' => $this->t('<a href="@help_url" target="_blank">Tool Help</a>', [
+        '@help_url' => Url::fromRoute('io_utils.search_replace_help')->toString(),
+      ]),
+      '#access' => !($replacement_done),
+    ];
+
+    $form['search_summary'] = [
+      '#type' => 'markup',
+      '#markup' => $this->generateSearchSummary($form_state),
+      '#prefix' => '<div class="search-summary">',
+      '#suffix' => '</div>',
+      '#access' => $has_matches,
+    ];
 
     $form['search'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Search'),
-      '#description' => $this->t('Enter your search term (regex)'),
+      '#description' => $this->t('Enter your search term (RegEx)'),
       '#required' => TRUE,
       '#default_value' => $form_state->getValue('search', ''),
       '#access' => !($has_matches),
@@ -74,8 +86,8 @@ class SearchReplaceForm extends FormBase
 
     $form['replace'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Replace with (optional)'),
-      '#description' => $this->t('What to replace with (regex)'),
+      '#title' => $this->t('Replace With (optional)'),
+      '#description' => $this->t('What to replace with (plain text or RegEx, see Help link below)'),
       '#required' => FALSE,
       '#default_value' => $form_state->getValue('replace', ''),
       '#access' => !($has_matches),
@@ -83,7 +95,7 @@ class SearchReplaceForm extends FormBase
 
     $form['limit_to_fields'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Limit To Field(s)'),
+      '#title' => $this->t('Limit To Field(s) (optional)'),
       '#description' => $this->t('Enter field names separated by commas. Leave empty to search all fields.'),
       '#required' => FALSE,
       '#default_value' => $form_state->getValue('limit_to_fields', ''),
@@ -92,7 +104,7 @@ class SearchReplaceForm extends FormBase
 
     $form['moderation_states'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Moderation State(s)'),
+      '#title' => $this->t('Moderation State(s) (optional)'),
       '#description' => $this->t('Enter moderation states separated by commas. Leave empty to search published only.'),
       '#required' => FALSE,
       '#default_value' => $form_state->getValue('moderation_states', ''),
@@ -104,7 +116,7 @@ class SearchReplaceForm extends FormBase
     ];
 
     if( $has_matches ) {
-      if( !empty($form_state->getValue('replace')) && !($form_state->get('replacement_done')) ) {
+      if( !empty($form_state->getValue('replace')) && !($replacement_done )) {
         // We have a search, AND the user wants to replace - but we have not confirmed it!
         $form['actions']['confirmReplace'] = [
           '#type' => 'submit',
@@ -112,6 +124,7 @@ class SearchReplaceForm extends FormBase
           '#submit' => ['::customReplaceSubmit'],
           '#name' => 'confirm',
           '#button_type' => 'primary',
+          '#attributes' => ['class' => ['confirm-replace-button']],
         ];
       }
     } else {
@@ -140,7 +153,8 @@ class SearchReplaceForm extends FormBase
 
       $form['message'] = [
         '#type' => 'markup',
-        '#markup' => $form_state->get('message_output'),
+        '#markup' => '<strong><em>' . $form_state->get('message_output') . '</em></strong>',
+        '#allowed_tags' => ['strong', 'em'],
       ];
 
       // when we're in search/pagination mode, make the box 10 rows, otherwise expand it to be as tall as the results.
@@ -165,7 +179,7 @@ class SearchReplaceForm extends FormBase
           '#submit' => ['::customPagerSubmit'],
           '#name' => 'prev',
           '#disabled' => !($current_page > 1),
-          '#access' => !($form_state->get('replacement_done')),
+          '#access' => !($replacement_done),
           '#attributes' => ['class' => ['pager-button']],
         ];
 
@@ -174,14 +188,12 @@ class SearchReplaceForm extends FormBase
           '#value' => $this->t('Next →'),
           '#submit' => ['::customPagerSubmit'],
           '#name' => 'next',
-          '#disabled' => !($current_page < ($total_pages) && !($form_state->get('replacement_done'))),
+          '#disabled' => !($current_page < ($total_pages) && !($replacement_done)),
           '#access' => !($form_state->get('replacement_done')),
           '#attributes' => ['class' => ['pager-button']],
         ];
-
       }
     }
-
     return $form;
   }
 
@@ -205,10 +217,11 @@ class SearchReplaceForm extends FormBase
     $limit_to_fields = $form_state->getValue('limit_to_fields');
     $moderation_states = $form_state->getValue('moderation_states');
 
-    $limit_to_fields_array = !empty($limit_to_fields) ? explode(',', $limit_to_fields) : [];
-    $moderation_states_array = !empty($moderation_states) ? explode(',', $moderation_states) : [];
+    $limit_to_fields_array = !empty($limit_to_fields) ? array_map('trim', explode(',', $limit_to_fields)) : [];
+    $moderation_states_array = !empty($moderation_states) ? array_map('trim', explode(',', $moderation_states)) : [];
 
     $results = $this->getSearchResults($search_terms, $limit_to_fields_array, $moderation_states_array);
+
     $form_state->set('search_results', $results);
     $form_state->set('current_page', 1); // Reset to first page on new search
     $form_state->setRebuild(true);
@@ -225,6 +238,7 @@ class SearchReplaceForm extends FormBase
     $moderation_states_array = !empty($moderation_states) ? explode(',', $moderation_states) : [];
 
     $results = $this->getSearchResults($search_terms, $limit_to_fields_array, $moderation_states_array, $replace_with);
+
     $form_state->set('search_results', $results);
     $form_state->set('current_page', 1);
     $form_state->set('replacement_done', 1);
@@ -258,10 +272,10 @@ class SearchReplaceForm extends FormBase
         $start_object = $start_index + 1;
         $end_object = min($start_object + self::ITEMS_PER_PAGE - 1, $total_results);
 
-        $message_output = "Viewing Objects $start_object-$end_object of $total_results (Page $current_page of $total_pages)";
+        $message_output = "Viewing Fields Found In Entities $start_object-$end_object of $total_results (Page $current_page of $total_pages)";
 
         foreach ($paged_results as $result) {
-          $results_output .= "URL: {$result['url']} (Title: {$result['title']}, Type: {$result['type']}, Moderation State: {$result['moderation_state']})\n";
+          $results_output .= "URL: {$result['url']} ({$result['title']}, {$result['type']}, {$result['moderation_state']})\n";
           foreach ($result['locations'] as $location) {
             $results_output .= "  - {$location['message']}\n";
           }
@@ -323,17 +337,22 @@ class SearchReplaceForm extends FormBase
       }
 
       $message_output = sprintf(
-        "Your search term was fully replaced in %d of %d entities (%d of %d occurrences).",
+        "Your search term was fully replaced in %d of %d entities (%d of %d fields).",
         $fullyReplacedCount,
         $total_results,
         $successfulReplacements,
         $totalOccurrences
       );
+
+      // Log the replacement results array for audit purposes
+      $log_message = $message_output . $results_output;
+      \Drupal::logger('io_utils')->notice($log_message);
     }
 
     $form_state->set('message_output', $message_output);
     $form_state->set('results_output', $results_output);
   }
+
 
   protected function generateSearchSummary(FormStateInterface $form_state) {
 
@@ -341,6 +360,7 @@ class SearchReplaceForm extends FormBase
     $replace = $form_state->getValue('replace') ?? '';
     $moderation_states = $form_state->getValue('moderation_states')?? '';
     $limit_to_fields = $form_state->getValue('limit_to_fields')?? '';
+    $replacement_done = $form_state->get('replacement_done')?? '';
 
     $summary = ['<div><strong><em>Searched For:</em></strong> "' . htmlspecialchars($search, ENT_QUOTES, 'UTF-8') . '"</div>'];
 
@@ -363,7 +383,14 @@ class SearchReplaceForm extends FormBase
     }
 
     if (!empty($replace)) {
-      $summary[] = '<div><strong><em>Replacing With:</em></strong> "' . htmlspecialchars($replace, ENT_QUOTES, 'UTF-8') . '"</div>';
+      if ($replacement_done) {
+        $summary[] = '<div><strong><em>Replaced With:</em></strong> "' . htmlspecialchars($replace, ENT_QUOTES, 'UTF-8') . '"</div>';
+        $summary[] = '<div><strong><em>NOTICE: Due to Content Sharing, Replacement Results may vary from Search Results</em></strong></div>';
+      }
+      else {
+        $summary[] = '<div><strong><em>Replacing With:</em></strong> "' . htmlspecialchars($replace, ENT_QUOTES, 'UTF-8') . '"</div>';
+        $summary[] = '<div><strong><em>PROCEED WITH CAUTION: Use of Replace feature can cause permanent project corruption, prior database backup is advised! </em></strong></div>';
+        }
     }
 
     return implode('', $summary);

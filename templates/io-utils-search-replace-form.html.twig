@@ -6,6 +6,7 @@
 #}
 
 <div class="search-replace-form">
+  {{ form.help_link }}
   {{ form.search_summary }}
   {{ form.search }}
   {{ form.replace }}
@@ -17,5 +18,5 @@
   {{ form.pager}}
 
   {# Render any remaining form elements #}
-  {{ form|without( 'search_summary', 'search', 'replace', 'limit_to_fields', 'moderation_states', 'actions', 'message', 'results', 'pager' ) }}
+  {{ form|without( 'help_link', 'search_summary', 'search', 'replace', 'limit_to_fields', 'moderation_states', 'actions', 'message', 'results', 'pager' ) }}
 </div>

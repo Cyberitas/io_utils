@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search and Replace Tool - Help Guide</title>
+  <style>
+    h1 {
+      font-size: 1.5em;
+    }
+    h2 {
+      font-size: 1.25em;
+    }
+    h3 {
+      font-size: 1em;
+    }
+    label {
+      font-size: 0.9em;
+      font-weight: normal;
+    }
+    .caution-box {
+      background-color: #fffacd; /* Light yellow background */
+      border: 1px solid #ffd700; /* Gold border */
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 1.1em; /* Slightly larger font */
+    }
+
+  </style>
+</head>
+<body>
+<h1>Search and Replace Tool - Help Guide</h1>
+<div class="caution-box">
+  <p><strong>CAUTION:</strong> Searching is always safe, but you should use the Replace functionality of this tool carefully as it can cause permanent project corruption if mistakes are made!</p>
+  <p>With a Replace, you will see Search results first, then have a chance to confirm the replacement, or not.</p>
+  <p>A full database backup is strongly recommended before executing a replace.</p>
+</div>
+
+<h2>Overview</h2>
+<p>The Search and Replace tool allows you to find and replace text across multiple pages and content types on your website. This powerful tool helps maintain consistency and make bulk updates efficiently.</p>
+
+<h2>How to Use</h2>
+<ol>
+  <li>
+    <h3>Search Term</h3>
+    <ul>
+      <li>Enter the text you want to find in the "Search For" field. This <strong>must</strong> be in the form of a valid regular expression (RegEx).</li>
+      <li>A typical search might look like: "/Corporation/" (without quotes). Please research RegEx online if unsure of syntax.</li>
+      <li>Note that once a Search has been executed and >0 results are returned without a Replace term specified, you'll need to use the Reset button to begin a Replace operation.</li>
+    </ul>
+  <li>
+    <h3>Replace Term (Optional)</h3>
+  <ul>
+    <li>Enter the plain text (or RegEx, see Tips below) you want to replace the search terms with in the "Replace With" field. </li>
+    <li>A corresponding replacement might look like: "Corporation, LLC" (without quotes). Please research RegEx online if unsure of syntax.</li>
+    <li>Leave this blank if you only want to search without replacing.</li>
+  </ul>
+    <p></p>
+  </li>
+  <li>
+    <h3>Limit to Fields (Optional)</h3>
+    <p>If you want to restrict the search to specific fields, enter them as a comma-separated list. For example: "body,title,field_description" (without quotes). Leave blank to search all fields.</p>
+  </li>
+  <li>
+    <h3>Moderation States (Optional)</h3>
+    <p>To limit the search to content in specific moderation states, enter them as a comma-separated list. For example: "draft,published" (without quotes). Leave blank to search only the 'published' state.</p>
+  </li>
+  <li>
+    <h3>Perform Search</h3>
+    <p>Click the "Search" button to find all fields in all entities (pages) that contain >0 matches for your search terms.</p>
+  </li>
+  <li>
+    <h3>Review Results</h3>
+    <ul>
+      <li>The search results will show you where the terms were found. Review this carefully before proceeding with any replacements.</li>
+      <li>Note there may be multiple pages of results returned, if so there will be Pager buttons at bottom of results</li>
+    </ul>
+  </li>
+  <li>
+    <h3>Confirm Replacement</h3>
+    <p>If you specified a replacement term and you're satisfied with the search results and want to proceed with the replacement, click the "Confirm Replacement" button.
+      This will replace all found instances of the search term with the replacement term, and provide an accounting of the replacements.
+    Note: Due to content sharing, replacement results may not match search results exactly, this is normal/expected.</p>
+  </li>
+</ol>
+
+<h2>Important Notes</h2>
+<ul>
+  <li>The tool will search through all content types unless specified otherwise.</li>
+  <li>Be cautious when using regular expressions, as they can lead to unintended replacements if not used correctly.</li>
+  <li>Always review the search results carefully before confirming any replacements.</li>
+  <li>Some content may be shared across multiple pages. Replacing shared content will affect all pages that use it.</li>
+  <li>The tool respects your user permissions, so you can only search and replace content you have access to edit.</li>
+</ul>
+
+<h2>Tips</h2>
+<ul>
+  <li>Use the "Limit to Fields" and "Moderation States" options to narrow down your search and avoid unintended replacements.</li>
+  <li>If you're unsure about making replacements, perform a search first without entering a replacement term to see where the content appears.</li>
+  <li>After making replacements, it's a good practice to do another search to verify the changes.</li>
+  <li>Advanced Replace (using RegEx as replacement term): You can use special patterns (regular expressions) for both the search and replace terms. This allows for more complex operations:
+    <ul>
+      <li>Search for: <code>(\w+)\s+(\w+)</code> - This finds two words with a space between them.</li>
+      <li>Replace with: <code>$2 $1</code> - This swaps the order of the two words.</li>
+      <li>Example: If you search for "Hello World", it will be replaced with "World Hello".</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>Troubleshooting</h2>
+<ul>
+  <li>If you don't see expected results, check your spelling, RegEx syntax, and ensure you have the necessary permissions to access the content.</li>
+  <li>For any persistent issues, please contact your site administrator.</li>
+</ul>
+</body>
+</html>

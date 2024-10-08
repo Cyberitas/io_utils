@@ -5,7 +5,7 @@ namespace Drupal\io_utils\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Response;
 
-class SearchReplaceHelpController extends ControllerBase {
+class HelpController extends ControllerBase {
 
 //  public function content() {
 //    $module_path = drupal_get_path('module', 'io_utils');
@@ -19,9 +19,9 @@ class SearchReplaceHelpController extends ControllerBase {
 
 
   public function content() {
-    $module_path = drupal_get_path('module', 'io_utils');
-    $help_content = file_get_contents($module_path . '/help/search-replace-help.html');
-
-    return new Response($help_content, 200, ['Content-Type' => 'text/html']);
+    $build = [
+      '#markup' => file_get_contents(__DIR__.'/../../help/search-replace-help.html')
+    ];
+    return $build;
   }
 }

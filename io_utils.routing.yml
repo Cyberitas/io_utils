@@ -6,10 +6,10 @@ io_utils.search_replace:
   requirements:
     _permission: 'administer site configuration'
 
-io_utils.search_replace_help:
+io_utils.help:
   path: '/admin/config/content/search-replace/help'
   defaults:
-    _controller: '\Drupal\io_utils\Controller\SearchReplaceHelpController::content'
-    _title: 'Search and Replace Help'
+    _controller: '\Drupal\io_utils\Controller\HelpController::content'
+    _title: 'IO Utilities Help'
   requirements:
-    _permission: 'access content'
+    _permission: 'access administration pages'

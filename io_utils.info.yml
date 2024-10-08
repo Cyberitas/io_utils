@@ -3,6 +3,7 @@ type: module
 description: 'IO Utils for Drupal 9'
 core_version_requirement: ^9 || ^10
 package: Custom
+help: io_utils.help
 dependencies:
   - drupal:node
   - paragraphs:paragraphs

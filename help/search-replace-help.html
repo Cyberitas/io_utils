@@ -1,34 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Search and Replace Tool - Help Guide</title>
-  <style>
-    h1 {
-      font-size: 1.5em;
-    }
-    h2 {
-      font-size: 1.25em;
-    }
-    h3 {
-      font-size: 1em;
-    }
-    label {
-      font-size: 0.9em;
-      font-weight: normal;
-    }
-    .caution-box {
-      background-color: #fffacd; /* Light yellow background */
-      border: 1px solid #ffd700; /* Gold border */
-      padding: 15px;
-      margin-bottom: 20px;
-      font-size: 1.1em; /* Slightly larger font */
-    }
-
-  </style>
-</head>
-<body>
 <h1>Search and Replace Tool - Help Guide</h1>
 <div class="caution-box">
   <p><strong>CAUTION:</strong> Searching is always safe, but you should use the Replace functionality of this tool carefully as it can cause permanent project corruption if mistakes are made!</p>
@@ -42,14 +11,14 @@
 <h2>How to Use</h2>
 <ol>
   <li>
-    <h3>Search Term</h3>
+    <strong>Search Term</strong>
     <ul>
       <li>Enter the text you want to find in the "Search For" field. This <strong>must</strong> be in the form of a valid regular expression (RegEx).</li>
       <li>A typical search might look like: "/Corporation/" (without quotes). Please research RegEx online if unsure of syntax.</li>
       <li>Note that once a Search has been executed and >0 results are returned without a Replace term specified, you'll need to use the Reset button to begin a Replace operation.</li>
     </ul>
   <li>
-    <h3>Replace Term (Optional)</h3>
+    <strong>Replace Term (Optional)</strong>
   <ul>
     <li>Enter the plain text (or RegEx, see Tips below) you want to replace the search terms with in the "Replace With" field. </li>
     <li>A corresponding replacement might look like: "Corporation, LLC" (without quotes). Please research RegEx online if unsure of syntax.</li>
@@ -58,26 +27,26 @@
     <p></p>
   </li>
   <li>
-    <h3>Limit to Fields (Optional)</h3>
+    <strong>Limit to Fields (Optional)</strong>
     <p>If you want to restrict the search to specific fields, enter them as a comma-separated list. For example: "body,title,field_description" (without quotes). Leave blank to search all fields.</p>
   </li>
   <li>
-    <h3>Moderation States (Optional)</h3>
+    <strong>Moderation States (Optional)</strong>
     <p>To limit the search to content in specific moderation states, enter them as a comma-separated list. For example: "draft,published" (without quotes). Leave blank to search only the 'published' state.</p>
   </li>
   <li>
-    <h3>Perform Search</h3>
+    <strong>Perform Search</strong>
     <p>Click the "Search" button to find all fields in all entities (pages) that contain >0 matches for your search terms.</p>
   </li>
   <li>
-    <h3>Review Results</h3>
+    <strong>Review Results</strong>
     <ul>
       <li>The search results will show you where the terms were found. Review this carefully before proceeding with any replacements.</li>
       <li>Note there may be multiple pages of results returned, if so there will be Pager buttons at bottom of results</li>
     </ul>
   </li>
   <li>
-    <h3>Confirm Replacement</h3>
+    <strong>Confirm Replacement</strong>
     <p>If you specified a replacement term and you're satisfied with the search results and want to proceed with the replacement, click the "Confirm Replacement" button.
       This will replace all found instances of the search term with the replacement term, and provide an accounting of the replacements.
     Note: Due to content sharing, replacement results may not match search results exactly, this is normal/expected.</p>
@@ -112,5 +81,3 @@
   <li>If you don't see expected results, check your spelling, RegEx syntax, and ensure you have the necessary permissions to access the content.</li>
   <li>For any persistent issues, please contact your site administrator.</li>
 </ul>
-</body>
-</html>

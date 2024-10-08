@@ -62,7 +62,7 @@ class SearchReplaceForm extends FormBase
       '#prefix' => '<div class="help-link-right">',
       '#suffix' => '</div>',
       '#markup' => $this->t('<a href="@help_url" target="_blank">Tool Help</a>', [
-        '@help_url' => Url::fromRoute('io_utils.search_replace_help')->toString(),
+        '@help_url' => Url::fromRoute('io_utils.help')->toString(),
       ]),
       '#access' => !($replacement_done),
     ];
@@ -78,7 +78,7 @@ class SearchReplaceForm extends FormBase
     $form['search'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Search'),
-      '#description' => $this->t('Enter your search term (RegEx)'),
+      '#description' => $this->t('Enter your search term (must be valid RegEx, see Tool Help link at upper right if needed)'),
       '#required' => TRUE,
       '#default_value' => $form_state->getValue('search', ''),
       '#access' => !($has_matches),
@@ -87,7 +87,7 @@ class SearchReplaceForm extends FormBase
     $form['replace'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Replace With (optional)'),
-      '#description' => $this->t('What to replace with (plain text or RegEx, see Help link below)'),
+      '#description' => $this->t('What to replace with (Plain Text or RegEx, see Tool Help link at upper right if needed)'),
       '#required' => FALSE,
       '#default_value' => $form_state->getValue('replace', ''),
       '#access' => !($has_matches),

@@ -35,7 +35,7 @@ class IoCommands extends DrushCommands {
    * @option moderation-states
    *   Limit the search to specific moderation states (comma-separated).
    *
-   * @command io:search
+   * @command io-utils:search
    * @aliases ios
    */
   public function search($pattern, array $options = ['limit-to-fields' => NULL, 'moderation-states' => NULL]) {

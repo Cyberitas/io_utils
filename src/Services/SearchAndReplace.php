@@ -14,13 +14,11 @@ use Drupal\block_content\Entity\BlockContent;
 class SearchAndReplace
 {
     protected $entityTypeManager;
-    protected $entityQuery;
     protected $logger;
 
     public function __construct(EntityTypeManagerInterface $entityTypeManager, LoggerChannelFactoryInterface $loggerFactory)
     {
         $this->entityTypeManager = $entityTypeManager;
-        $this->entityQuery = $entityTypeManager->getStorage('node')->getQuery();
         $this->logger = $loggerFactory->get('io_utils');
     }
 
@@ -67,9 +65,13 @@ class SearchAndReplace
             'matches' => [],
         ];
         $aUnsupportedTypes = [];
-        $nids = $this->entityQuery->execute();
+        $nids = $this->entityTypeManager
+          ->getStorage('node')
+          ->getQuery()
+          ->accessCheck(false)
+          ->execute();
 
-        if ($nids) {
+         if ($nids) {
             $this->logger->info("Starting search and replace operation.");
             $total_count = 0;
             $processed_count = 0;

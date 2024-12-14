@@ -5,7 +5,7 @@ namespace Drupal\io_utils\Commands;
 use Drupal;
 use Drush\Commands\DrushCommands;
 use Drush\Exceptions\UserAbortException;
-
+use Drupal\io_utils\Services\SearchAndReplace;
 
 /**
  * Drush commands for post import and export
@@ -15,71 +15,191 @@ use Drush\Exceptions\UserAbortException;
 
 class IoCommands extends DrushCommands {
 
-    /**
-     * Search all active entities for a regular expression
-     * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
-     * @option field-names Optional comma-separated list of entity types to search
-     * @option moderation-states Optional comma-separated list of moderation status to search (e.g. draft/archived), defaults to all published states
-     * @command io-utils:search
-     * @usage io-utils:search "/example/" [--field-names body,field_example]
-     *   Searches for the given regex expression in all active fields of all published entities
-     */
-    public function search(string $search, $options = ['field-names' => NULL, 'moderation-states' => NULL]) {
+  protected $searchReplaceService;
 
-        $fieldNames = [];
-        if( !empty($options['field-names']) ) {
-            $fieldNames = explode(',', $options['field-names']);
-        }
+  public function __construct(SearchAndReplace $searchReplaceService) {
+    parent::__construct();
+    $this->searchReplaceService = $searchReplaceService;
+  }
 
-        $moderationStates = [];
-        if( !empty($options['moderation-states']) ) {
-            $moderationStates = explode(',', $options['moderation-states']);
-        }
+  /**
+   * Search for a regex pattern.
+   *
+   * @param string $pattern
+   *   The regex pattern to search for.
+   * @param array $options
+   *   An associative array of options whose values come from cli, aliases, config, etc.
+   *
+   * @option limit-to-fields
+   *   Limit the search to specific fields (comma-separated).
+   * @option moderation-states
+   *   Limit the search to specific moderation states (comma-separated).
+   *
+   * @command io-utils:search
+   * @aliases ios
+   */
+  public function search($pattern, array $options = ['limit-to-fields' => NULL, 'moderation-states' => NULL]) {
+    $limit_to_fields = $options['limit-to-fields'] ? explode(',', $options['limit-to-fields']) : [];
+    $moderation_states = $options['moderation-states'] ? explode(',', $options['moderation-states']) : [];
 
-        $searchService = new Drupal\io_utils\Services\SearchAndReplace($this->output);
-        ob_start();
-        $count = $searchService->findByRegex($search, $fieldNames, $moderationStates);
-        $results = ob_get_clean();
+    $results = $this->searchReplaceService->findByRegex($pattern, $limit_to_fields, $moderation_states);
 
-        $this->io()->writeln($results);
-        $this->io()->success("Your search term was found in $count entities.");
+    if (empty($results['count'])) {
+      $this->output()->writeln("No matches found.");
+      return;
     }
 
-    /**
-     * Search and replace all active entities for a regular expression with a replacement, allowing back references
-     * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
-     * @param string $replace The replacement string, e.g. "bar-$1-baz"
-     * @option field-names Optional comma-separated list of entity types to search/replace
-     * @option moderation-states Optional comma-separated list of moderation status to search (e.g. draft/archived), defaults to all published states
-     * @command io-utils:replace
-     * @usage io-utils:replace "/^foo-(.*)-baz$/" "bar-$1-baz" --field-names body,field_example
-     *   Searches for the given regex expression in all active fields of all published entities, and replaces it with the given replacement string
-     */
-    public function replace(string $search, string $replace, $options = ['field-names' => NULL, 'moderation-states' => NULL]) {
-
-        if (!$this->io()->confirm(dt('Are you sure you wish to continue with a global search and replace (you should back up the DB first)?'))) {
-            throw new UserAbortException();
-        }
-
-        $fieldNames = [];
-        if( !empty($options['field-names']) ) {
-            $fieldNames = explode(',', $options['field-names']);
-        }
-
-        $moderationStates = [];
-        if( !empty($options['moderation-states']) ) {
-            $moderationStates = explode(',', $options['moderation-states']);
-        }
-
-        $searchService = new Drupal\io_utils\Services\SearchAndReplace($this->output);
-        ob_start();
-        $count = $searchService->replaceByRegex($search, $replace, $fieldNames, $moderationStates);
-        $results = ob_get_clean();
-
-        $this->io()->writeln($results);
-        $this->io()->success("Your search term was replaced in $count entities.");
+    $totalOccurrences = 0;
+    foreach ($results['matches'] as $match) {
+      $totalOccurrences += count($match['locations']);
     }
 
+    $output = "Found {$totalOccurrences} fields in {$results['count']} entities:\n\n";
+
+    foreach ($results['matches'] as $match) {
+      $output .= "URL: {$match['url']}\n";
+      $output .= "Type: {$match['type']}\n";
+      $output .= "Title: {$match['title']}\n";
+      $output .= "Moderation State: " . ($match['moderation_state'] ?: 'N/A') . "\n";
+      $output .= "Locations:\n";
+      foreach ($match['locations'] as $location) {
+        $output .= "  {$location['message']}\n";
+      }
+      $output .= "---\n\n";
+    }
+
+    $this->output()->writeln($output);
+  }
+
+  /**
+   * Search and replace all active entities for a regular expression with a replacement, allowing back references
+   * @param string $search The regular expression to search for, e.g. /^foo-(.*)-baz$/
+   * @param string $replace The replacement string, e.g. "bar-$1-baz"
+   * @option field-names Optional comma-separated list of entity types to search/replace
+   * @option moderation-states Optional comma-separated list of moderation status to search (e.g. draft/archived), defaults to all published states
+   * @command io-utils:replace
+   * @usage io-utils:replace "/^foo-(.*)-baz$/" "bar-$1-baz" [--field-names body,field_example --moderation-states state_example]
+   *   Searches for the given regex expression in all active fields of all published entities, and replaces it with the given replacement string
+   */
+  public function replace(string $search, string $replace, $options = ['field-names' => NULL, 'moderation-states' => NULL])
+  {
+    $fieldNames = !empty($options['field-names']) ? explode(',', $options['field-names']) : [];
+    $moderationStates = !empty($options['moderation-states']) ? explode(',', $options['moderation-states']) : [];
+
+    // First, perform a search to show the results
+
+    $results = $this->searchReplaceService->findByRegex($search, $fieldNames, $moderationStates);
+
+    if (empty($results['count'])) {
+      $this->output()->writeln("No matches found. No replacements will be made.");
+      return;
+    }
+
+    $matchCounts = [];
+    $totalOccurrences = 0;
+    foreach ($results['matches'] as $match) {
+      $matchCount = count($match['locations']);
+      $matchCounts[$match['url']] = $matchCount;
+      $totalOccurrences += $matchCount;
+    }
+
+    $this->output()->writeln("Found {$totalOccurrences} fields in {$results['count']} entities:");
+
+    $output = '';
+    foreach ($results['matches'] as $match) {
+      $output .= "URL: {$match['url']}\n";
+      $output .= "Type: {$match['type']}\n";
+      $output .= "Title: {$match['title']}\n";
+      $output .= "Moderation State: " . ($match['moderation_state'] ?: 'N/A') . "\n";
+      $output .= "Locations:\n";
+      foreach ($match['locations'] as $location) {
+        $output .= "  {$location['message']}\n";
+      }
+      $output .= "---\n\n";
+    }
+
+    $this->output()->writeln($output);
+
+    // Ask for confirmation
+    if (!$this->io()->confirm(dt('Are you sure you wish to proceed with the replacement on these @count entities (@occurrences fields) (you should back up the DB first)?', ['@count' => $results['count'], '@occurrences' => $totalOccurrences]))) {
+      throw new UserAbortException();
+    }
+
+    // Perform the replacement
+    $results = $this->searchReplaceService->replaceByRegex($search, $replace, $fieldNames, $moderationStates);
+
+
+    // Format For Replacement Results
+    $total_results = $results['count'];
+    $fullyReplacedCount = 0;
+    $totalOccurrences = 0;
+    $successfulReplacements = 0;
+    $matchCounts = [];
+    $results_output = "";
+
+    // First, count total occurrences
+    foreach ($results['matches'] as $match) {
+      $searchCount = count(array_filter($match['locations'], function($location) {
+        return $location['status'] === 'search';
+      }));
+      $matchCounts[$match['url']] = $searchCount;
+      $totalOccurrences += $searchCount;
+    }
+
+    foreach ($results['matches'] as $match) {
+      $found = 0;
+      $replaced = 0;
+      $errors = 0;
+
+      foreach ($match['locations'] as $location) {
+        switch ($location['status']) {
+          case 'search':
+            $found++;
+            break;
+          case 'replace':
+            $replaced++;
+            $successfulReplacements++;
+            break;
+          case 'resumable error':
+            $errors++;
+            break;
+        }
+      }
+
+      $isFullyReplaced = ($replaced == $matchCounts[$match['url']]);
+      if ($isFullyReplaced) {
+        $fullyReplacedCount++;
+      }
+
+      $results_output .= sprintf(
+        "%s \"%s\" with \"%s\" at %s (Found: %d, Replaced: %d, Error: %d, Fully Replaced: %s)\n",
+        $isFullyReplaced ? "Replaced" : "Attempted replacement",
+        $search,
+        $replace,
+        $match['url'],
+        $found,
+        $replaced,
+        $errors,
+        $isFullyReplaced ? 'Yes' : 'No'
+      );
+    }
+
+    $message_output = sprintf(
+      "Your search term was fully replaced in %d of %d entities (%d of %d fields).  Note that due to content sharing, replacement counts may not match search counts exactly.",
+      $fullyReplacedCount,
+      $total_results,
+      $successfulReplacements,
+      $totalOccurrences
+    );
+
+    // Log the replacement results array for audit purposes
+    $log_message = $message_output . $results_output;
+   \Drupal::logger('io_utils')->debug($log_message);
+
+    $this->output()->writeln($results_output);
+    $this->output()->writeln($message_output);
+
+  }
 
   /**
    * Exports an entity by ID to a JSON file.
@@ -89,11 +209,11 @@ class IoCommands extends DrushCommands {
    * @param $saveFile
    *   Filename to export ID to
    * @param $bPublishedOnly
-   *   Boolean flag indicates if only published nodes can be exported or not
+   *   Boolean flag indicates if only published nodes will be exported, true is default, set as false to include all states
    *
    * @command io-utils:export-one
    *
-   * @usage io-utils:export-one 17 drupal_post_17.json 0
+   * @usage io-utils:export-one 17 drupal_post_17.json false
    *   Creates a file called "drupal_post_17.json" or rewrites it, and puts in a json representation of a Drupal post with ID of 17
    */
   public function exportOne($postId, $saveFile, $bPublishedOnly=true) {
@@ -124,10 +244,10 @@ class IoCommands extends DrushCommands {
    *
    * @param $saveFile
    *   Filename to import block content from
+   * @option wptf
+   *  Boolean flag indicates whether to transform imported WordPress content into compatible Drupal content, default is false, set to true to transform
    *
    * @command io-utils:import-one-block-content
-   * @option wptf
-   *   Whether or not to transform imported WordPress content into compatible Drupal content
    *
    * @usage io-utils:import-one-block-content /srv/export/block-17.json
    * Reads a file called "block-17.json", and puts saved information into a new Drupal block content
@@ -206,6 +326,8 @@ class IoCommands extends DrushCommands {
   /**
    * Exports all entities to JSON files in a directory.
    *
+   * @param $contentType
+   *    Content type to export
    * @param $saveDirectory
    *   Directory within which to place saved files
    *

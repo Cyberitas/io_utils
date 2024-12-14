@@ -1,6 +1,6 @@
 services:
   io_utils.commands:
-    class: \Drupal\io_utils\Commands\IoCommands
+    class: Drupal\io_utils\Commands\IoCommands
+    arguments: ['@io_utils.search_and_replace']
     tags:
       - { name: drush.command }
-

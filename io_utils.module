@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function io_utils_theme() {
+  return [
+    'io_utils_search_replace_form' => [
+      'render element' => 'form',
+      'template' => 'io-utils-search-replace-form',
+    ],
+  ];
+}
+
+
+/**
+ * Implements hook_help()
+ */
+function io_utils_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.io_utils':
+    case 'io_utils.help':
+      return file_get_contents(__DIR__.'/help/search-replace-help.html');
+  }
+  return null;
+}

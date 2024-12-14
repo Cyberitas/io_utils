@@ -1,0 +1,4 @@
+administer sitewide search replace:
+  title: 'Administer Sitewide Search Replace'
+  description: 'Perform search and replace operations using regex.'
+  restrict access: TRUE

@@ -1,0 +1,22 @@
+{#
+/**
+ * @file
+ * Theme implementation for the Search and Replace form.
+ */
+#}
+
+<div class="search-replace-form">
+  {{ form.help_link }}
+  {{ form.search_summary }}
+  {{ form.search }}
+  {{ form.replace }}
+  {{ form.limit_to_fields }}
+  {{ form.moderation_states }}
+  {{ form.actions }}
+  {{ form.message }}
+  {{ form.results }}
+  {{ form.pager}}
+
+  {# Render any remaining form elements #}
+  {{ form|without( 'help_link', 'search_summary', 'search', 'replace', 'limit_to_fields', 'moderation_states', 'actions', 'message', 'results', 'pager' ) }}
+</div>

@@ -1,9 +1,10 @@
-name: IO Utils
+name: IO Utilities
 type: module
-description: 'IO Utils for Drupal 9'
+description: "Provides Drush commands to allow users to deep import/export nodes into and out of files."
+package: IO Utilities
 core_version_requirement: ^9 || ^10
-package: Custom
-help: io_utils.help
+author: Cyberitas Technologies, LLC.
+version: '5.1.0'
 dependencies:
   - drupal:node
   - paragraphs:paragraphs

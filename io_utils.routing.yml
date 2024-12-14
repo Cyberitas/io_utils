@@ -2,9 +2,9 @@ io_utils.search_replace:
   path: '/admin/config/io-utils/search-replace'
   defaults:
     _controller: '\Drupal\io_utils\Controller\IoUtilsController::searchReplacePage'
-    _title: 'Search and Replace'
+    _title: 'Sitewide Search and Replace'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer sitewide search replace'
 
 io_utils.help:
   path: '/admin/config/content/search-replace/help'

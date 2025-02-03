@@ -32,7 +32,7 @@ class DrupalBlockContentImporter
     $saveFormat->unserialize($serialized);
 
     // Load all the block content items and check if title already exists. Display message and return.
-    $blockContentItems = Drupal::entityQuery('block_content')->condition('info', $saveFormat->getTitle())->execute();
+    $blockContentItems = Drupal::entityQuery('block_content')->accessCheck(FALSE)->condition('info', $saveFormat->getTitle())->execute();
     if($blockContentItems && sizeof($blockContentItems) > 0) {
       echo "ERROR: Block content already exists with description [" . $saveFormat->getTitle() . "], import failed.\n";
       return null;

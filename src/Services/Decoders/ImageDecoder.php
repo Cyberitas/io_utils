@@ -4,7 +4,7 @@
 namespace Drupal\io_utils\Services\Decoders;
 
 use Drupal;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 
 class ImageDecoder extends AbstractFieldDecoder implements FieldDecoderInterface
 {
@@ -130,7 +130,7 @@ class ImageDecoder extends AbstractFieldDecoder implements FieldDecoderInterface
 
     // echo 'Contents imported, saving to '.$uri.'...'.". ";
 
-    $fileSaved = Drupal::service('file.repository')->writeData($fileData, $uri, FileSystemInterface::EXISTS_RENAME);
+    $fileSaved = Drupal::service('file.repository')->writeData($fileData, $uri, FileExists::Rename);
     // echo 'Save attempted...'."\n";
     if(!$fileSaved){
       echo 'Error saving image.'."\n";

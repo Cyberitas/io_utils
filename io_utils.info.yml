@@ -2,9 +2,9 @@ name: IO Utilities
 type: module
 description: "Provides Drush commands to allow users to deep import/export nodes into and out of files."
 package: IO Utilities
-core_version_requirement: ^9 || ^10
+core_version_requirement: ^9 || ^10 || ^11
 author: Cyberitas Technologies, LLC.
-version: '5.1.0'
+version: '5.2.0'
 dependencies:
   - drupal:node
   - paragraphs:paragraphs
